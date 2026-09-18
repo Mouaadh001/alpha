@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.get_order_public(uuid) FROM anon, authenticated;
