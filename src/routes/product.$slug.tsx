@@ -30,6 +30,7 @@ type AlgeriaWilaya = {
 };
 
 const ALGERIA_WILAYAS = algeriaData as AlgeriaWilaya[];
+const ENABLE_ORDER_EMAILS = import.meta.env.VITE_ENABLE_ORDER_EMAILS === "true";
 
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (s: Record<string, unknown>): { family?: 1 } =>
@@ -183,6 +184,16 @@ function ProductPage() {
         line_total_da: subtotal,
       }]);
       if (e2) throw e2;
+      if (ENABLE_ORDER_EMAILS) {
+        supabase.functions
+          .invoke("send-order-email", { body: { order_id: orderId } })
+          .then(({ error }) => {
+            if (error) console.warn("Order email was not sent:", error.message);
+          })
+          .catch((emailError) => {
+            console.warn("Order email was not sent:", getErrorMessage(emailError, "Unknown email error"));
+          });
+      }
       navigate({ to: "/order/$id", params: { id: orderId } });
     } catch (err) {
       toast.error(getErrorMessage(err, locale === "fr" ? "Erreur" : "خطأ"));
@@ -388,6 +399,25 @@ function ProductPage() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="rounded-3xl bg-neutral-50 p-5">
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <span className="text-neutral-500">
+                        {locale === "fr" ? "Produit" : "المنتج"}{qty > 1 ? ` x${qty}` : ""}
+                      </span>
+                      <span className="font-black tabular-nums">{formatDA(subtotal, locale)}</span>
+                    </div>
+                    {selectedVariantLabel && (
+                      <div className="mt-1 text-xs text-neutral-400">
+                        {selectedVariantLabel}
+                      </div>
+                    )}
+                    <div className="my-4 h-px bg-neutral-200" />
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-lg font-black">Total</span>
+                      <span className="text-xl font-black text-[#a855f7] tabular-nums">{formatDA(total, locale)}</span>
+                    </div>
                   </div>
 
                   <button
