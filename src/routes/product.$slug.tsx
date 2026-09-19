@@ -3,7 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { SiteShell } from "@/components/site-shell";
-import { productBySlugQO, categoriesQO, productsByCategoryPreviewQO, productFamilyQO } from "@/lib/queries";
+import {
+  productBySlugQO,
+  categoriesQO,
+  productsByCategoryPreviewQO,
+  productFamilyQO,
+} from "@/lib/queries";
 import { useI18n, useT } from "@/lib/i18n";
 import { formatDA } from "@/lib/format";
 import { toast } from "sonner";
@@ -30,7 +35,24 @@ type AlgeriaWilaya = {
 };
 
 const ALGERIA_WILAYAS = algeriaData as AlgeriaWilaya[];
-const ENABLE_ORDER_EMAILS = import.meta.env.VITE_ENABLE_ORDER_EMAILS === "true";
+
+async function sendOrderEmail(orderId: string) {
+  const { data, error } = await supabase.functions.invoke("send-order-email", {
+    body: { order_id: orderId },
+  });
+
+  if (error) {
+    console.warn("Order email was not sent:", error.message);
+    return;
+  }
+
+  if (data && data.email_sent === false) {
+    console.warn(
+      "Order email was not sent:",
+      data.warning ?? data.reason ?? data.error ?? "Unknown email error",
+    );
+  }
+}
 
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (s: Record<string, unknown>): { family?: 1 } =>
@@ -54,8 +76,16 @@ export const Route = createFileRoute("/product/$slug")({
     return { product };
   },
   component: ProductPage,
-  errorComponent: ({ error }) => <SiteShell><div className="p-12">{error.message}</div></SiteShell>,
-  notFoundComponent: () => <SiteShell><div className="p-12">Produit introuvable.</div></SiteShell>,
+  errorComponent: ({ error }) => (
+    <SiteShell>
+      <div className="p-12">{error.message}</div>
+    </SiteShell>
+  ),
+  notFoundComponent: () => (
+    <SiteShell>
+      <div className="p-12">Produit introuvable.</div>
+    </SiteShell>
+  ),
 });
 
 function ProductPage() {
@@ -85,26 +115,39 @@ function ProductPage() {
 
   const cat = categories.find((c) => c.id === product.category_id);
   const name = locale === "ar" && product.name_ar ? product.name_ar : product.name_fr;
-  const description = locale === "ar" && product.description_ar ? product.description_ar : product.description_fr;
-  const gallery = (product.images && product.images.length > 0)
-    ? product.images
-    : (product.image_url ? [product.image_url] : []);
+  const description =
+    locale === "ar" && product.description_ar ? product.description_ar : product.description_fr;
+  const gallery =
+    product.images && product.images.length > 0
+      ? product.images
+      : product.image_url
+        ? [product.image_url]
+        : [];
 
   // Size / storage variants
-  const hasVariants = !!(product.storage_option_1 && product.storage_option_2 && product.price_da_option_2);
+  const hasVariants = !!(
+    product.storage_option_1 &&
+    product.storage_option_2 &&
+    product.price_da_option_2
+  );
   const [selectedVariant, setSelectedVariant] = useState<"1" | "2">("1");
   // Reset storage selection when switching editions
-  useEffect(() => { setSelectedVariant("1"); }, [product.id]);
+  useEffect(() => {
+    setSelectedVariant("1");
+  }, [product.id]);
   const unitPrice =
     hasVariants && selectedVariant === "2"
       ? (product.price_da_option_2 as number)
       : product.price_da;
   const selectedVariantLabel = hasVariants
-    ? (selectedVariant === "2" ? product.storage_option_2! : product.storage_option_1!)
+    ? selectedVariant === "2"
+      ? product.storage_option_2!
+      : product.storage_option_1!
     : null;
-  const discountPct = product.compare_at_price_da && product.compare_at_price_da > unitPrice
-    ? Math.round(100 - (unitPrice / product.compare_at_price_da) * 100)
-    : 0;
+  const discountPct =
+    product.compare_at_price_da && product.compare_at_price_da > unitPrice
+      ? Math.round(100 - (unitPrice / product.compare_at_price_da) * 100)
+      : 0;
 
   // Direct order form state
   const [qty, setQty] = useState(1);
@@ -118,10 +161,10 @@ function ProductPage() {
   useEffect(() => {
     const el = formRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => setShowStickyCTA(!entry.isIntersecting),
-      { rootMargin: "0px 0px -20% 0px", threshold: 0 }
-    );
+    const io = new IntersectionObserver(([entry]) => setShowStickyCTA(!entry.isIntersecting), {
+      rootMargin: "0px 0px -20% 0px",
+      threshold: 0,
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -147,7 +190,9 @@ function ProductPage() {
     const parsed = schema.safeParse(form);
     if (!parsed.success) {
       const errs: Record<string, string> = {};
-      parsed.error.issues.forEach((i) => { errs[String(i.path[0])] = locale === "fr" ? "Champ requis" : "حقل مطلوب"; });
+      parsed.error.issues.forEach((i) => {
+        errs[String(i.path[0])] = locale === "fr" ? "Champ requis" : "حقل مطلوب";
+      });
       setErrors(errs);
       return;
     }
@@ -156,7 +201,8 @@ function ProductPage() {
     try {
       const wilaya = ALGERIA_WILAYAS.find((item) => item.code === parsed.data.wilaya);
       const commune = wilaya?.communes.find((item) => item.id === parsed.data.commune);
-      if (!wilaya || !commune) throw new Error(locale === "fr" ? "Wilaya et commune requis" : "الولاية والبلدية مطلوبتان");
+      if (!wilaya || !commune)
+        throw new Error(locale === "fr" ? "Wilaya et commune requis" : "الولاية والبلدية مطلوبتان");
 
       const wilayaName = `${wilaya.code} - ${wilaya.nameFr}`;
       const communeName = commune.nameFr;
@@ -173,26 +219,26 @@ function ProductPage() {
         total_da: total,
       });
       if (error) throw error;
-      const { error: e2 } = await supabase.from("order_items").insert([{
-        order_id: orderId,
-        product_id: product.id,
-        product_name: selectedVariantLabel ? `${name} — ${selectedVariantLabel}` : name,
-        product_slug: product.slug,
-        image_url: product.image_url,
-        unit_price_da: unitPrice,
-        quantity: qty,
-        line_total_da: subtotal,
-      }]);
+      const { error: e2 } = await supabase.from("order_items").insert([
+        {
+          order_id: orderId,
+          product_id: product.id,
+          product_name: selectedVariantLabel ? `${name} — ${selectedVariantLabel}` : name,
+          product_slug: product.slug,
+          image_url: product.image_url,
+          unit_price_da: unitPrice,
+          quantity: qty,
+          line_total_da: subtotal,
+        },
+      ]);
       if (e2) throw e2;
-      if (ENABLE_ORDER_EMAILS) {
-        supabase.functions
-          .invoke("send-order-email", { body: { order_id: orderId } })
-          .then(({ error }) => {
-            if (error) console.warn("Order email was not sent:", error.message);
-          })
-          .catch((emailError) => {
-            console.warn("Order email was not sent:", getErrorMessage(emailError, "Unknown email error"));
-          });
+      try {
+        await sendOrderEmail(orderId);
+      } catch (emailError) {
+        console.warn(
+          "Order email was not sent:",
+          getErrorMessage(emailError, "Unknown email error"),
+        );
       }
       navigate({ to: "/order/$id", params: { id: orderId } });
     } catch (err) {
@@ -215,7 +261,10 @@ function ProductPage() {
         <BackButton className="mb-4" />
         {cat && (
           <nav className="eyebrow mb-6 flex gap-2 flex-wrap">
-            <Link to="/" className="hover:text-lime">{t.home}</Link><span>/</span>
+            <Link to="/" className="hover:text-lime">
+              {t.home}
+            </Link>
+            <span>/</span>
             <Link to="/category/$slug" params={{ slug: cat.slug }} className="hover:text-lime">
               {locale === "ar" && cat.name_ar ? cat.name_ar : cat.name_fr}
             </Link>
@@ -229,14 +278,22 @@ function ProductPage() {
 
           <div className="lg:sticky lg:top-24 flex flex-col">
             {product.brand && <span className="eyebrow mb-3">{product.brand}</span>}
-            <h1 className="font-display font-bold text-2xl md:text-4xl uppercase leading-[1.1] tracking-tight mb-4">{name}</h1>
+            <h1 className="font-display font-bold text-2xl md:text-4xl uppercase leading-[1.1] tracking-tight mb-4">
+              {name}
+            </h1>
 
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 mb-8">
-              <span className="text-2xl md:text-3xl font-display font-bold whitespace-nowrap">{formatDA(unitPrice, locale)}</span>
+              <span className="text-2xl md:text-3xl font-display font-bold whitespace-nowrap">
+                {formatDA(unitPrice, locale)}
+              </span>
               {discountPct > 0 && (
                 <>
-                  <span className="text-sm text-muted-foreground line-through">{formatDA(product.compare_at_price_da!, locale)}</span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest bg-red text-red-foreground px-2 py-1 rounded">−{discountPct}%</span>
+                  <span className="text-sm text-muted-foreground line-through">
+                    {formatDA(product.compare_at_price_da!, locale)}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest bg-red text-red-foreground px-2 py-1 rounded">
+                    −{discountPct}%
+                  </span>
                 </>
               )}
             </div>
@@ -248,9 +305,11 @@ function ProductPage() {
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   {familySiblings.map((sibling) => {
-                    const sName = locale === "ar" && sibling.name_ar ? sibling.name_ar : sibling.name_fr;
+                    const sName =
+                      locale === "ar" && sibling.name_ar ? sibling.name_ar : sibling.name_fr;
                     // Strip common family prefix so only the distinctive part shows
-                    const parentName = locale === "ar" && product.name_ar ? product.name_ar : product.name_fr;
+                    const parentName =
+                      locale === "ar" && product.name_ar ? product.name_ar : product.name_fr;
                     const prefix = parentName.split(" ").slice(0, 3).join(" ");
                     const shortLabel = sName.toLowerCase().startsWith(prefix.toLowerCase())
                       ? sName.slice(prefix.length).trim() || sName
@@ -270,7 +329,9 @@ function ProductPage() {
                         }`}
                       >
                         <span className="block text-sm font-bold truncate">{shortLabel}</span>
-                        <span className="block text-xs font-mono opacity-70">{formatDA(sibling.price_da, locale)}</span>
+                        <span className="block text-xs font-mono opacity-70">
+                          {formatDA(sibling.price_da, locale)}
+                        </span>
                       </button>
                     );
                   })}
@@ -284,10 +345,14 @@ function ProductPage() {
                   {locale === "fr" ? "Choisissez la taille" : "اختر الحجم"}
                 </span>
                 <div className="grid grid-cols-2 gap-2">
-                  {([
+                  {[
                     { id: "1" as const, label: product.storage_option_1!, price: product.price_da },
-                    { id: "2" as const, label: product.storage_option_2!, price: product.price_da_option_2! },
-                  ]).map((opt) => (
+                    {
+                      id: "2" as const,
+                      label: product.storage_option_2!,
+                      price: product.price_da_option_2!,
+                    },
+                  ].map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
@@ -299,7 +364,9 @@ function ProductPage() {
                       }`}
                     >
                       <span className="block text-sm font-bold">{opt.label}</span>
-                      <span className="block text-xs font-mono opacity-70">{formatDA(opt.price, locale)}</span>
+                      <span className="block text-xs font-mono opacity-70">
+                        {formatDA(opt.price, locale)}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -307,7 +374,11 @@ function ProductPage() {
             )}
 
             {/* Direct order form (Cash on Delivery) */}
-            <form ref={formRef} onSubmit={submitOrder} className="rounded-3xl border border-neutral-200 bg-white p-5 md:p-6 text-neutral-900 mb-5">
+            <form
+              ref={formRef}
+              onSubmit={submitOrder}
+              className="rounded-3xl border border-neutral-200 bg-white p-5 md:p-6 text-neutral-900 mb-5"
+            >
               {outOfStock ? (
                 <div className="rounded-2xl bg-neutral-100 p-5 text-center text-sm font-semibold text-neutral-500">
                   {locale === "fr" ? "Produit en rupture de stock." : "المنتج غير متوفر حالياً."}
@@ -404,19 +475,20 @@ function ProductPage() {
                   <div className="rounded-3xl bg-neutral-50 p-5">
                     <div className="flex items-center justify-between gap-4 text-sm">
                       <span className="text-neutral-500">
-                        {locale === "fr" ? "Produit" : "المنتج"}{qty > 1 ? ` x${qty}` : ""}
+                        {locale === "fr" ? "Produit" : "المنتج"}
+                        {qty > 1 ? ` x${qty}` : ""}
                       </span>
                       <span className="font-black tabular-nums">{formatDA(subtotal, locale)}</span>
                     </div>
                     {selectedVariantLabel && (
-                      <div className="mt-1 text-xs text-neutral-400">
-                        {selectedVariantLabel}
-                      </div>
+                      <div className="mt-1 text-xs text-neutral-400">{selectedVariantLabel}</div>
                     )}
                     <div className="my-4 h-px bg-neutral-200" />
                     <div className="flex items-center justify-between gap-4">
                       <span className="text-lg font-black">Total</span>
-                      <span className="text-xl font-black text-[#a855f7] tabular-nums">{formatDA(total, locale)}</span>
+                      <span className="text-xl font-black text-[#a855f7] tabular-nums">
+                        {formatDA(total, locale)}
+                      </span>
                     </div>
                   </div>
 
@@ -425,7 +497,11 @@ function ProductPage() {
                     disabled={submitting}
                     className="h-14 w-full rounded-full bg-[#a855f7] text-white font-black uppercase tracking-wide shadow-[0_10px_30px_-12px_rgba(168,85,247,0.8)] transition hover:bg-[#9333ea] disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    {submitting ? <Loader2 className="size-5 animate-spin" /> : <ShoppingCart className="size-5" />}
+                    {submitting ? (
+                      <Loader2 className="size-5 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="size-5" />
+                    )}
                     {locale === "fr" ? "Confirmer la commande" : "تأكيد الطلب"}
                   </button>
                 </div>
@@ -434,8 +510,12 @@ function ProductPage() {
 
             {description && (
               <div className="mt-2">
-                <span className="eyebrow mb-3 block">{locale === "fr" ? "Description" : "الوصف"}</span>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{description}</p>
+                <span className="eyebrow mb-3 block">
+                  {locale === "fr" ? "Description" : "الوصف"}
+                </span>
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {description}
+                </p>
               </div>
             )}
           </div>
@@ -451,33 +531,42 @@ function ProductPage() {
                 </h2>
               </div>
               {cat && (
-                <Link to="/category/$slug" params={{ slug: cat.slug }} className="eyebrow hover:text-lime hidden md:block">
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: cat.slug }}
+                  className="eyebrow hover:text-lime hidden md:block"
+                >
                   {t.all} →
                 </Link>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-              {related.filter((p) => p.id !== product.id).slice(0, 4).map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
+              {related
+                .filter((p) => p.id !== product.id)
+                .slice(0, 4)
+                .map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
             </div>
           </section>
         )}
       </div>
 
       {/* Sticky mobile CTA — animated purple pill */}
-      {!outOfStock && (<div
-        className={`lg:hidden fixed bottom-4 inset-x-0 z-[70] flex justify-center pointer-events-none transition-all duration-300 ${
-          showStickyCTA ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-        }`}
-      >
-        <button
-          onClick={scrollToForm}
-          className="pointer-events-auto h-12 px-8 rounded-full bg-[#a855f7] text-white font-bold text-sm tracking-wide flex items-center justify-center active:scale-95 transition shadow-[0_10px_40px_-8px_rgba(168,85,247,0.7)] animate-cta-pulse"
+      {!outOfStock && (
+        <div
+          className={`lg:hidden fixed bottom-4 inset-x-0 z-[70] flex justify-center pointer-events-none transition-all duration-300 ${
+            showStickyCTA ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+          }`}
         >
-          {locale === "fr" ? "Commander" : "اطلب الآن"}
-        </button>
-      </div>)}
+          <button
+            onClick={scrollToForm}
+            className="pointer-events-auto h-12 px-8 rounded-full bg-[#a855f7] text-white font-bold text-sm tracking-wide flex items-center justify-center active:scale-95 transition shadow-[0_10px_40px_-8px_rgba(168,85,247,0.7)] animate-cta-pulse"
+          >
+            {locale === "fr" ? "Commander" : "اطلب الآن"}
+          </button>
+        </div>
+      )}
     </SiteShell>
   );
 }
