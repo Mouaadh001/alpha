@@ -12,6 +12,8 @@ import { ProductCard } from "@/components/product-card";
 import { BackButton } from "@/components/back-button";
 import { Minus, Plus, Loader2, ShoppingCart, User, Phone, MapPin, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { WILAYAS } from "@/lib/orders";
+import { getErrorMessage } from "@/lib/errors";
 
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (s: Record<string, unknown>): { family?: 1 } =>
@@ -93,7 +95,7 @@ function ProductPage() {
   const [form, setForm] = useState({ full_name: "", phone: "", wilaya: "", commune: "" });
   const [deliveryType, setDeliveryType] = useState<"office" | "home">("office");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const formRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const [showStickyCTA, setShowStickyCTA] = useState(false);
 
@@ -158,14 +160,13 @@ function ProductPage() {
         unit_price_da: unitPrice,
         quantity: qty,
         line_total_da: subtotal,
-        variant: selectedVariantLabel,
       }]);
       if (e2) throw e2;
       // Fire-and-forget: send admin email (never blocks the user flow)
       supabase.functions.invoke("send-order-email", { body: { order_id: orderId } }).catch(() => {});
       navigate({ to: "/order/$id", params: { id: orderId } });
-    } catch (err: any) {
-      toast.error(err?.message ?? (locale === "fr" ? "Erreur" : "خطأ"));
+    } catch (err) {
+      toast.error(getErrorMessage(err, locale === "fr" ? "Erreur" : "خطأ"));
       setSubmitting(false);
     }
   };
@@ -276,9 +277,143 @@ function ProductPage() {
             )}
 
             {/* Direct order form (Cash on Delivery) */}
-            <div className="rounded-3xl border border-neutral-200 bg-white p-6 text-neutral-900 mb-5">
-              <p className="text-sm text-neutral-500">{locale === "fr" ? "Produit disponible à la consultation uniquement." : "هذا المنتج للعرض فقط."}</p>
-            </div>
+            <form ref={formRef} onSubmit={submitOrder} className="rounded-3xl border border-neutral-200 bg-white p-5 md:p-6 text-neutral-900 mb-5">
+              {outOfStock ? (
+                <div className="rounded-2xl bg-neutral-100 p-5 text-center text-sm font-semibold text-neutral-500">
+                  {locale === "fr" ? "Produit en rupture de stock." : "المنتج غير متوفر حالياً."}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-black uppercase tracking-tight">
+                        {locale === "fr" ? "Commander maintenant" : "اطلب الآن"}
+                      </h2>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        {locale === "fr" ? "Paiement à la livraison." : "الدفع عند الاستلام."}
+                      </p>
+                    </div>
+                    <div className="flex h-11 items-center rounded-full border border-neutral-200 bg-neutral-50">
+                      <button
+                        type="button"
+                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        className="grid size-11 place-items-center text-neutral-600 hover:text-neutral-950"
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="size-4" />
+                      </button>
+                      <span className="w-9 text-center text-sm font-black">{qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => setQty((q) => Math.min(product.stock, q + 1))}
+                        className="grid size-11 place-items-center text-neutral-600 hover:text-neutral-950"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={fieldWrapCls("full_name")}>
+                    <User className={iconCls} />
+                    <input
+                      ref={firstFieldRef}
+                      value={form.full_name}
+                      onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                      className={inputInner}
+                      placeholder={locale === "fr" ? "Nom complet" : "الاسم الكامل"}
+                      autoComplete="name"
+                    />
+                  </div>
+
+                  <div className={fieldWrapCls("phone")}>
+                    <Phone className={iconCls} />
+                    <input
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      className={inputInner}
+                      placeholder={locale === "fr" ? "Téléphone" : "رقم الهاتف"}
+                      inputMode="tel"
+                      autoComplete="tel"
+                    />
+                  </div>
+
+                  <div className={fieldWrapCls("wilaya")}>
+                    <MapPin className={iconCls} />
+                    <select
+                      value={form.wilaya}
+                      onChange={(e) => setForm({ ...form, wilaya: e.target.value })}
+                      className={inputInner}
+                    >
+                      <option value="">{locale === "fr" ? "Wilaya" : "الولاية"}</option>
+                      {WILAYAS.map((wilaya) => (
+                        <option key={wilaya} value={wilaya}>{wilaya}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className={fieldWrapCls("commune")}>
+                    <Home className={iconCls} />
+                    <input
+                      value={form.commune}
+                      onChange={(e) => setForm({ ...form, commune: e.target.value })}
+                      className={inputInner}
+                      placeholder={locale === "fr" ? "Commune / adresse courte" : "البلدية / العنوان"}
+                      autoComplete="address-level2"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryType("office")}
+                      className={`h-14 rounded-2xl border text-sm font-bold transition ${
+                        deliveryType === "office"
+                          ? "border-[#a855f7] bg-[#a855f7]/10 text-[#7e22ce]"
+                          : "border-neutral-200 bg-neutral-50 text-neutral-600"
+                      }`}
+                    >
+                      {locale === "fr" ? "Bureau 750 DA" : "المكتب 750 دج"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryType("home")}
+                      className={`h-14 rounded-2xl border text-sm font-bold transition ${
+                        deliveryType === "home"
+                          ? "border-[#a855f7] bg-[#a855f7]/10 text-[#7e22ce]"
+                          : "border-neutral-200 bg-neutral-50 text-neutral-600"
+                      }`}
+                    >
+                      {locale === "fr" ? "Domicile 1000 DA" : "للمنزل 1000 دج"}
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl bg-neutral-50 p-4 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-neutral-500">{locale === "fr" ? "Produit" : "المنتج"}</span>
+                      <span className="font-bold">{formatDA(subtotal, locale)}</span>
+                    </div>
+                    <div className="mt-2 flex justify-between gap-3">
+                      <span className="text-neutral-500">{locale === "fr" ? "Livraison" : "التوصيل"}</span>
+                      <span className="font-bold">{formatDA(shipping, locale)}</span>
+                    </div>
+                    <div className="mt-3 border-t border-neutral-200 pt-3 flex justify-between gap-3 text-base">
+                      <span className="font-black">{locale === "fr" ? "Total" : "المجموع"}</span>
+                      <span className="font-black text-[#a855f7]">{formatDA(total, locale)}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="h-14 w-full rounded-full bg-[#a855f7] text-white font-black uppercase tracking-wide shadow-[0_10px_30px_-12px_rgba(168,85,247,0.8)] transition hover:bg-[#9333ea] disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {submitting ? <Loader2 className="size-5 animate-spin" /> : <ShoppingCart className="size-5" />}
+                    {locale === "fr" ? "Confirmer la commande" : "تأكيد الطلب"}
+                  </button>
+                </div>
+              )}
+            </form>
 
             {description && (
               <div className="mt-2">
