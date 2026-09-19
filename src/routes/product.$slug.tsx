@@ -392,17 +392,6 @@ function ProductPage() {
                     </select>
                   </div>
 
-                  <div className="rounded-2xl bg-neutral-50 p-4 text-sm">
-                    <div className="flex justify-between gap-3">
-                      <span className="text-neutral-500">{locale === "fr" ? "Produit" : "المنتج"}</span>
-                      <span className="font-bold">{formatDA(subtotal, locale)}</span>
-                    </div>
-                    <div className="mt-3 border-t border-neutral-200 pt-3 flex justify-between gap-3 text-base">
-                      <span className="font-black">{locale === "fr" ? "Total" : "المجموع"}</span>
-                      <span className="font-black text-[#a855f7]">{formatDA(total, locale)}</span>
-                    </div>
-                  </div>
-
                   <button
                     type="submit"
                     disabled={submitting}
