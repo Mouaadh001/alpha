@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const isMissingEmailConfig = (value: string | null | undefined) =>
+  !value || value.includes("YOUR_") || value === "your@email.com";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -13,11 +22,16 @@ serve(async (req) => {
     const { order_id } = await req.json();
     if (!order_id) throw new Error("order_id is required");
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
-    const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@alphastore.dz";
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
     const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Alpha Store <onboarding@resend.dev>";
+    const ADMIN_BASE_URL = (Deno.env.get("ADMIN_BASE_URL") || "https://alpha-rktkejilu-mouaadh-s-projects1.vercel.app").replace(/\/$/, "");
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase service credentials are not configured");
+    }
 
     // Fetch order + items via service role (bypasses RLS)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -50,9 +64,6 @@ serve(async (req) => {
         </tr>`
       )
       .join("");
-
-    const deliveryNote = order.notes ?? "";
-    const deliveryType = deliveryNote.toLowerCase().includes("domicile") ? "🏠 À domicile" : "🏪 Bureau";
 
     const html = `
 <!DOCTYPE html>
@@ -100,10 +111,6 @@ serve(async (req) => {
           <td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Commune</td>
           <td style="padding:5px 0;color:#e2e0ff;font-weight:600;">${order.commune}</td>
         </tr>
-        <tr>
-          <td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Livraison</td>
-          <td style="padding:5px 0;color:#e2e0ff;font-weight:600;">${deliveryType}</td>
-        </tr>
         ${order.notes ? `<tr><td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Notes</td><td style="padding:5px 0;color:#a78bfa;font-size:13px;">${order.notes}</td></tr>` : ""}
       </table>
     </div>
@@ -130,10 +137,6 @@ serve(async (req) => {
           <span style="color:#6b6b8a;font-size:13px;">Sous-total</span>
           <span style="color:#e2e0ff;font-family:monospace;">${formatDA(order.subtotal_da)}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-          <span style="color:#6b6b8a;font-size:13px;">Livraison</span>
-          <span style="color:#e2e0ff;font-family:monospace;">${formatDA(order.total_da - order.subtotal_da)}</span>
-        </div>
         <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid #2a1f4a;">
           <span style="color:#fff;font-weight:800;font-size:16px;">TOTAL</span>
           <span style="color:#a855f7;font-family:monospace;font-weight:800;font-size:18px;">${formatDA(order.total_da)}</span>
@@ -143,7 +146,7 @@ serve(async (req) => {
 
     <!-- CTA -->
     <div style="text-align:center;margin-bottom:24px;">
-      <a href="https://alphastore.dz/admin/orders/${order.id}"
+      <a href="${ADMIN_BASE_URL}/admin/orders/${order.id}"
          style="display:inline-block;background:#a855f7;color:#fff;text-decoration:none;padding:14px 32px;border-radius:999px;font-weight:700;font-size:14px;letter-spacing:0.5px;">
         Voir dans l'admin →
       </a>
@@ -156,6 +159,16 @@ serve(async (req) => {
   </div>
 </body>
 </html>`;
+
+    if (isMissingEmailConfig(RESEND_API_KEY) || isMissingEmailConfig(ADMIN_EMAIL)) {
+      console.warn("send-order-email skipped: email provider is not configured");
+      return jsonResponse({
+        success: true,
+        email_sent: false,
+        skipped: true,
+        reason: "Email provider is not configured",
+      });
+    }
 
     // Send via Resend
     const resendRes = await fetch("https://api.resend.com/emails", {
@@ -172,18 +185,34 @@ serve(async (req) => {
       }),
     });
 
-    const resendData = await resendRes.json();
-    if (!resendRes.ok) throw new Error(`Resend error: ${JSON.stringify(resendData)}`);
+    let resendData: unknown = null;
+    try {
+      resendData = await resendRes.json();
+    } catch {
+      resendData = await resendRes.text().catch(() => null);
+    }
 
-    return new Response(JSON.stringify({ success: true, email_id: resendData.id }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (!resendRes.ok) {
+      console.error("Resend rejected the order email:", resendData);
+      return jsonResponse({
+        success: true,
+        email_sent: false,
+        warning: "Email provider rejected the message",
+      });
+    }
+
+    return jsonResponse({
+      success: true,
+      email_sent: true,
+      email_id: typeof resendData === "object" && resendData && "id" in resendData ? resendData.id : null,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("send-order-email error:", message);
-    return new Response(JSON.stringify({ error: message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return jsonResponse({
+      success: false,
+      email_sent: false,
+      error: message,
     });
   }
 });
