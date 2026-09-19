@@ -8,6 +8,7 @@ import { GamingHero } from "@/components/gaming-hero";
 import { TopConsoles } from "@/components/top-consoles";
 import { SpaceBackdrop } from "@/components/space-backdrop";
 import { Reveal } from "@/components/reveal";
+import { LazySection } from "@/components/lazy-section";
 import { Truck, ShieldCheck } from "lucide-react";
 import {
   featuredProductsQO,
@@ -84,7 +85,9 @@ export function Home() {
       )}
 
       {/* Top consoles showcase */}
-      <TopConsoles />
+      <LazySection minHeight={520}>
+        <TopConsoles />
+      </LazySection>
 
       {/* All products */}
       {isOn("featured_products") && (
@@ -123,9 +126,13 @@ export function Home() {
       )}
 
       {/* Per-category product strips */}
-      {isOn("category_strips") && categories.map((c, i) => (
-        <CategoryProductStrip key={c.id} category={c} index={i + 3} />
-      ))}
+      {isOn("category_strips") && (
+        <LazySection minHeight={420} rootMargin="900px">
+          {categories.slice(0, 4).map((c, i) => (
+            <CategoryProductStrip key={c.id} category={c} index={i + 3} />
+          ))}
+        </LazySection>
+      )}
 
       {/* Trust strip */}
       <section className="max-w-[1600px] mx-auto px-4 md:px-6 pt-10 md:pt-14">

@@ -91,7 +91,8 @@ export const latestProductsQO = queryOptions({
       .from("products")
       .select("*")
       .eq("active", true)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(12);
     if (error) throw error;
     return data ?? [];
   },
