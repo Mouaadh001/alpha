@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { productByFamilyFirstQO, homepageSectionsQO } from "@/lib/queries";
+import { productByFamilyFirstQO } from "@/lib/queries";
 import ps5 from "@/assets/float-ps5-console.webp";
 import ps4 from "@/assets/console-ps4.webp";
 import xboxX from "@/assets/float-xbox-console.webp";
@@ -79,8 +79,7 @@ const ITEMS: Item[] = [
 
 export function TopConsoles() {
   const { locale } = useI18n();
-  const { data: sections = [] } = useQuery(homepageSectionsQO);
-  const cfg = (sections.find((s) => s.section_type === "top_consoles")?.config ?? {}) as Record<string, unknown>;
+  const cfg = {} as Record<string, unknown>;
   const override = (key: string) => {
     const v = cfg[`image_${key.replace("-", "_")}`];
     return typeof v === "string" && v ? v : null;

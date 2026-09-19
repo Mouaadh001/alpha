@@ -1,6 +1,4 @@
 import { useI18n } from "@/lib/i18n";
-import { useQuery } from "@tanstack/react-query";
-import { homepageSectionsQO } from "@/lib/queries";
 import floatPs from "@/assets/float-ps.webp";
 import floatXbox from "@/assets/float-xbox.webp";
 import floatManette from "@/assets/float-manette.webp";
@@ -12,8 +10,7 @@ import heroBg from "@/assets/hero-bg.webp";
 
 export function GamingHero() {
   const { locale } = useI18n();
-  const { data: sections = [] } = useQuery(homepageSectionsQO);
-  const cfg = (sections.find((s) => s.section_type === "hero")?.config ?? {}) as Record<string, unknown>;
+  const cfg = {} as Record<string, unknown>;
   const g = (k: string, fb: string) => {
     const v = cfg[locale === "ar" ? `${k}_ar` : `${k}_fr`];
     return typeof v === "string" && v.trim() ? v : fb;

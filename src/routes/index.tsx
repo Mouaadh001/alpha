@@ -14,8 +14,6 @@ import {
   featuredProductsQO,
   latestProductsQO,
   categoriesQO,
-  announcementBarQO,
-  homepageSectionsQO,
 } from "@/lib/queries";
 import { useI18n, useT } from "@/lib/i18n";
 import { ArrowRight } from "lucide-react";
@@ -40,17 +38,10 @@ export function Home() {
   const { data: featured = [] } = useQuery(featuredProductsQO);
   const { data: latest = [] } = useQuery(latestProductsQO);
   const { data: categories = [] } = useQuery(categoriesQO);
-  const { data: sections = [] } = useQuery(homepageSectionsQO);
   const { locale } = useI18n();
   const t = useT();
-  const isOn = (type: string) => {
-    const s = sections.find((x) => x.section_type === type);
-    return !s || s.enabled;
-  };
-  const cfg = (type: string): Record<string, unknown> => {
-    const s = sections.find((x) => x.section_type === type);
-    return (s?.config as Record<string, unknown>) ?? {};
-  };
+  const isOn = (_type: string) => true;
+  const cfg = (_type: string): Record<string, unknown> => ({});
   const localized = (c: Record<string, unknown>, key: string, fallback: string) => {
     const v = c[locale === "ar" ? `${key}_ar` : `${key}_fr`];
     return typeof v === "string" && v.trim() ? v : fallback;
