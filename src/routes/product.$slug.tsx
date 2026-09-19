@@ -10,10 +10,26 @@ import { toast } from "sonner";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductCard } from "@/components/product-card";
 import { BackButton } from "@/components/back-button";
-import { Minus, Plus, Loader2, ShoppingCart, User, Phone, MapPin, Home } from "lucide-react";
+import { Minus, Plus, Loader2, ShoppingCart, User, Phone, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { WILAYAS } from "@/lib/orders";
 import { getErrorMessage } from "@/lib/errors";
+import algeriaData from "../../algeria-data.json";
+
+type AlgeriaCommune = {
+  id: string;
+  postCode: string;
+  nameFr: string;
+  nameAr: string;
+};
+
+type AlgeriaWilaya = {
+  code: string;
+  nameFr: string;
+  nameAr: string;
+  communes: AlgeriaCommune[];
+};
+
+const ALGERIA_WILAYAS = algeriaData as AlgeriaWilaya[];
 
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (s: Record<string, unknown>): { family?: 1 } =>
@@ -93,7 +109,6 @@ function ProductPage() {
   const [qty, setQty] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ full_name: "", phone: "", wilaya: "", commune: "" });
-  const [deliveryType, setDeliveryType] = useState<"office" | "home">("office");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement | null>(null);
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
@@ -119,11 +134,11 @@ function ProductPage() {
     full_name: z.string().trim().min(2),
     phone: z.string().trim().min(8).max(20),
     wilaya: z.string().min(1),
-    commune: z.string().trim().min(2).max(80),
+    commune: z.string().min(1),
   });
   const subtotal = unitPrice * qty;
-  const shipping = deliveryType === "office" ? 750 : 1000;
-  const total = subtotal + shipping;
+  const total = subtotal;
+  const selectedWilaya = ALGERIA_WILAYAS.find((wilaya) => wilaya.code === form.wilaya) ?? null;
 
   const submitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,15 +153,21 @@ function ProductPage() {
     setErrors({});
     setSubmitting(true);
     try {
+      const wilaya = ALGERIA_WILAYAS.find((item) => item.code === parsed.data.wilaya);
+      const commune = wilaya?.communes.find((item) => item.id === parsed.data.commune);
+      if (!wilaya || !commune) throw new Error(locale === "fr" ? "Wilaya et commune requis" : "الولاية والبلدية مطلوبتان");
+
+      const wilayaName = `${wilaya.code} - ${wilaya.nameFr}`;
+      const communeName = commune.nameFr;
       const orderId = crypto.randomUUID();
       const { error } = await supabase.from("orders").insert({
         id: orderId,
         full_name: parsed.data.full_name,
         phone: parsed.data.phone,
-        wilaya: parsed.data.wilaya,
-        commune: parsed.data.commune,
-        address: parsed.data.commune,
-        notes: deliveryType === "office" ? "Livraison au bureau - 750 DA" : "Livraison à domicile - 1000 DA",
+        wilaya: wilayaName,
+        commune: communeName,
+        address: communeName,
+        notes: null,
         subtotal_da: subtotal,
         total_da: total,
       });
@@ -342,60 +363,39 @@ function ProductPage() {
                     <MapPin className={iconCls} />
                     <select
                       value={form.wilaya}
-                      onChange={(e) => setForm({ ...form, wilaya: e.target.value })}
+                      onChange={(e) => setForm({ ...form, wilaya: e.target.value, commune: "" })}
                       className={inputInner}
                     >
                       <option value="">{locale === "fr" ? "Wilaya" : "الولاية"}</option>
-                      {WILAYAS.map((wilaya) => (
-                        <option key={wilaya} value={wilaya}>{wilaya}</option>
+                      {ALGERIA_WILAYAS.map((wilaya) => (
+                        <option key={wilaya.code} value={wilaya.code}>
+                          {wilaya.code} - {locale === "ar" ? wilaya.nameAr : wilaya.nameFr}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div className={fieldWrapCls("commune")}>
-                    <Home className={iconCls} />
-                    <input
+                    <MapPin className={iconCls} />
+                    <select
                       value={form.commune}
                       onChange={(e) => setForm({ ...form, commune: e.target.value })}
                       className={inputInner}
-                      placeholder={locale === "fr" ? "Commune / adresse courte" : "البلدية / العنوان"}
-                      autoComplete="address-level2"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setDeliveryType("office")}
-                      className={`h-14 rounded-2xl border text-sm font-bold transition ${
-                        deliveryType === "office"
-                          ? "border-[#a855f7] bg-[#a855f7]/10 text-[#7e22ce]"
-                          : "border-neutral-200 bg-neutral-50 text-neutral-600"
-                      }`}
+                      disabled={!selectedWilaya}
                     >
-                      {locale === "fr" ? "Bureau 750 DA" : "المكتب 750 دج"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeliveryType("home")}
-                      className={`h-14 rounded-2xl border text-sm font-bold transition ${
-                        deliveryType === "home"
-                          ? "border-[#a855f7] bg-[#a855f7]/10 text-[#7e22ce]"
-                          : "border-neutral-200 bg-neutral-50 text-neutral-600"
-                      }`}
-                    >
-                      {locale === "fr" ? "Domicile 1000 DA" : "للمنزل 1000 دج"}
-                    </button>
+                      <option value="">{locale === "fr" ? "Commune / province" : "البلدية"}</option>
+                      {selectedWilaya?.communes.map((commune) => (
+                        <option key={commune.id} value={commune.id}>
+                          {locale === "ar" ? commune.nameAr : commune.nameFr}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="rounded-2xl bg-neutral-50 p-4 text-sm">
                     <div className="flex justify-between gap-3">
                       <span className="text-neutral-500">{locale === "fr" ? "Produit" : "المنتج"}</span>
                       <span className="font-bold">{formatDA(subtotal, locale)}</span>
-                    </div>
-                    <div className="mt-2 flex justify-between gap-3">
-                      <span className="text-neutral-500">{locale === "fr" ? "Livraison" : "التوصيل"}</span>
-                      <span className="font-bold">{formatDA(shipping, locale)}</span>
                     </div>
                     <div className="mt-3 border-t border-neutral-200 pt-3 flex justify-between gap-3 text-base">
                       <span className="font-black">{locale === "fr" ? "Total" : "المجموع"}</span>
