@@ -30,7 +30,6 @@ type AlgeriaWilaya = {
 };
 
 const ALGERIA_WILAYAS = algeriaData as AlgeriaWilaya[];
-const ENABLE_ORDER_EMAILS = import.meta.env.VITE_ENABLE_ORDER_EMAILS === "true";
 
 export const Route = createFileRoute("/product/$slug")({
   validateSearch: (s: Record<string, unknown>): { family?: 1 } =>
@@ -184,17 +183,6 @@ function ProductPage() {
         line_total_da: subtotal,
       }]);
       if (e2) throw e2;
-      // Fire-and-forget: only call the email function when the provider is configured.
-      if (ENABLE_ORDER_EMAILS) {
-        supabase.functions
-          .invoke("send-order-email", { body: { order_id: orderId } })
-          .then(({ error }) => {
-            if (error) console.warn("Order email was not sent:", error.message);
-          })
-          .catch((emailError) => {
-            console.warn("Order email was not sent:", getErrorMessage(emailError, "Unknown email error"));
-          });
-      }
       navigate({ to: "/order/$id", params: { id: orderId } });
     } catch (err) {
       toast.error(getErrorMessage(err, locale === "fr" ? "Erreur" : "خطأ"));
