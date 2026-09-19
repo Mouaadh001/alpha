@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Save, Trash2 } from "lucide-react";
 import { AdminPage, AdminActionBar, ConfirmDialog, btnDanger } from "@/components/admin/shell";
 import { MultiImageUploader } from "@/components/admin/image-uploader";
+import { getErrorMessage } from "@/lib/errors";
 
 const fieldCls =
   "w-full h-12 px-4 rounded-2xl bg-[#111317] border border-[#23262F] text-white placeholder:text-white/30 text-[15px] outline-none transition focus:border-[#FF2B2B]/60 focus:ring-2 focus:ring-[#FF2B2B]/20";
@@ -150,7 +151,7 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
       if (onDone) onDone();
       else navigate({ to: "/admin/products" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(getErrorMessage(err, "Impossible d'enregistrer le produit"));
     } finally {
       setSaving(false);
     }
@@ -316,4 +317,3 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
     </AdminPage>
   );
 }
-

@@ -12,6 +12,7 @@ import {
 } from "@/components/admin/shell";
 import { SingleImageUploader } from "@/components/admin/image-uploader";
 import { deleteImage } from "@/lib/admin-upload";
+import { getErrorMessage } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/admin/subcategories")({
   component: SubcategoriesAdmin,
@@ -177,7 +178,7 @@ function SubcategoryEditor({
       }
       onSaved();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(getErrorMessage(e, "Impossible d'enregistrer la sous-catégorie"));
     } finally {
       setSaving(false);
     }

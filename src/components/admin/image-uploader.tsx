@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage, deleteImage } from "@/lib/admin-upload";
+import { getErrorMessage } from "@/lib/errors";
 
 type Bucket = "product-images" | "category-images";
 
@@ -39,7 +40,7 @@ export function SingleImageUploader({
       onChange(url);
       toast.success("Image envoyée");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Échec de l'envoi");
+      toast.error(getErrorMessage(e, "Échec de l'envoi"));
     } finally {
       setUploading(false);
     }
@@ -127,7 +128,7 @@ export function MultiImageUploader({
         const url = await uploadImage(bucket, f);
         results.push(url);
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Échec de l'envoi");
+        toast.error(getErrorMessage(e, "Échec de l'envoi"));
       } finally {
         setUploading((n) => n - 1);
       }
