@@ -1,8 +1,8 @@
-import floatPs5 from "@/assets/float-ps5-console.png";
-import floatXbox from "@/assets/float-xbox-console.png";
-import floatSwitch from "@/assets/float-switch.png";
-import floatManette from "@/assets/float-manette.png";
-import floatHeadset from "@/assets/float-headset.png";
+import floatPs5 from "@/assets/float-ps5-console.webp";
+import floatXbox from "@/assets/float-xbox-console.webp";
+import floatSwitch from "@/assets/float-switch.webp";
+import floatManette from "@/assets/float-manette.webp";
+import floatHeadset from "@/assets/float-headset.webp";
 
 /**
  * Animated deep-space backdrop with blurred gaming props drifting slowly.
@@ -50,32 +50,44 @@ export function SpaceBackdrop() {
       <img
         src={floatPs5}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute left-[-6%] top-[8%] w-[32%] max-w-[380px] opacity-40 blur-[2px] animate-drift-a"
       />
       <img
         src={floatXbox}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute right-[-4%] top-[55%] w-[30%] max-w-[340px] opacity-40 blur-[2px] animate-drift-b"
       />
       <img
         src={floatSwitch}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute left-[40%] top-[70%] w-[20%] max-w-[220px] opacity-35 blur-[1.5px] animate-drift-c"
       />
       <img
         src={floatManette}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute left-[15%] top-[45%] w-[14%] max-w-[160px] opacity-45 blur-[1.5px] animate-drift-b"
       />
       <img
         src={floatManette}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute right-[20%] top-[12%] w-[12%] max-w-[140px] opacity-40 blur-[1.5px] animate-drift-c"
         style={{ transform: "scaleX(-1)" }}
       />
       <img
         src={floatHeadset}
         alt=""
+        loading="lazy"
+        decoding="async"
         className="absolute right-[8%] top-[25%] w-[16%] max-w-[180px] opacity-40 blur-[1.5px] animate-drift-a"
       />
 

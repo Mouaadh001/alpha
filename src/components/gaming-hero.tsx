@@ -1,14 +1,14 @@
 import { useI18n } from "@/lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { homepageSectionsQO } from "@/lib/queries";
-import floatPs from "@/assets/float-ps.png";
-import floatXbox from "@/assets/float-xbox.png";
-import floatManette from "@/assets/float-manette.png";
-import floatPsConsole from "@/assets/float-ps5-console.png";
-import floatXboxConsole from "@/assets/float-xbox-console.png";
-import floatXboxS from "@/assets/float-xbox-s.png";
-import floatSwitch from "@/assets/float-switch.png";
-import heroBg from "@/assets/hero-bg.jpg";
+import floatPs from "@/assets/float-ps.webp";
+import floatXbox from "@/assets/float-xbox.webp";
+import floatManette from "@/assets/float-manette.webp";
+import floatPsConsole from "@/assets/float-ps5-console.webp";
+import floatXboxConsole from "@/assets/float-xbox-console.webp";
+import floatXboxS from "@/assets/float-xbox-s.webp";
+import floatSwitch from "@/assets/float-switch.webp";
+import heroBg from "@/assets/hero-bg.webp";
 
 export function GamingHero() {
   const { locale } = useI18n();
@@ -42,6 +42,8 @@ export function GamingHero() {
             src={floatPs}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute top-4 left-4 md:top-8 md:left-10 w-20 sm:w-28 md:w-36 lg:w-40 animate-float-slow drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
             style={{ ["--rot" as string]: "-12deg" } as React.CSSProperties}
           />
@@ -49,6 +51,8 @@ export function GamingHero() {
             src={floatXbox}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute top-4 right-4 md:top-8 md:right-10 w-20 sm:w-28 md:w-36 lg:w-40 animate-float-med drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
             style={{ ["--rot" as string]: "10deg" } as React.CSSProperties}
           />
@@ -56,6 +60,8 @@ export function GamingHero() {
             src={floatManette}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 sm:w-32 md:w-44 lg:w-52 animate-float-fast drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)] opacity-90"
             style={{ ["--rot" as string]: "6deg" } as React.CSSProperties}
           />
@@ -63,6 +69,8 @@ export function GamingHero() {
             src={floatPsConsole}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute bottom-20 -left-6 sm:bottom-24 sm:-left-4 md:bottom-28 md:-left-2 w-[56vw] sm:w-[38vw] md:w-[30vw] lg:w-[28vw] max-w-[34rem] h-auto animate-float-med drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
             style={{ ["--rot" as string]: "-8deg" } as React.CSSProperties}
           />
@@ -70,6 +78,8 @@ export function GamingHero() {
             src={floatXboxConsole}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute bottom-20 right-0 sm:bottom-24 sm:right-2 md:bottom-28 md:right-4 w-[56vw] sm:w-[38vw] md:w-[30vw] lg:w-[28vw] max-w-[34rem] h-auto animate-float-slow drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
             style={{ ["--rot" as string]: "8deg" } as React.CSSProperties}
           />
@@ -77,6 +87,8 @@ export function GamingHero() {
             src={floatXboxS}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute bottom-20 left-1/2 -translate-x-1/2 sm:bottom-24 md:bottom-28 w-[50vw] sm:w-[34vw] md:w-[28vw] lg:w-[26vw] max-w-[30rem] h-auto animate-float-med drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
             style={{ ["--rot" as string]: "4deg" } as React.CSSProperties}
           />
@@ -84,6 +96,8 @@ export function GamingHero() {
             src={floatSwitch}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute top-6 left-1/2 -translate-x-1/2 md:top-10 w-24 sm:w-32 md:w-40 lg:w-48 animate-float-fast drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
             style={{ ["--rot" as string]: "-4deg" } as React.CSSProperties}
           />

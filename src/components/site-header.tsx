@@ -7,7 +7,7 @@ import { useI18n, useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useQuery } from "@tanstack/react-query";
 import { categoriesQO, subcategoriesQO } from "@/lib/queries";
-import alphaLogo from "@/assets/alpha-logo.png";
+import alphaLogo from "@/assets/alpha-logo.webp";
 
 const INSTAGRAM_URL = "https://www.instagram.com/alpha.store.eleulma?igsh=MW9rNmlqZGRleDZ2aA==";
 const FACEBOOK_URL = "https://www.facebook.com/share/196VyBTVGN/?mibextid=wwXIfr";
@@ -85,7 +85,7 @@ export function SiteHeader() {
 
           {/* Center — logo */}
           <Link to="/" className="justify-self-center flex items-center" aria-label="Alpha Store">
-            <img src={alphaLogo} alt="Alpha Store" className="h-16 md:h-20 w-auto object-contain -my-4" />
+            <img src={alphaLogo} alt="Alpha Store" decoding="async" className="h-16 md:h-20 w-auto object-contain -my-4" />
           </Link>
 
           {/* Right — search + cart */}
@@ -209,7 +209,7 @@ export function SiteHeader() {
           />
           <aside className="relative w-[85%] max-w-sm h-full bg-background border-e border-hairline shadow-2xl flex flex-col animate-slide-in-left">
             <div className="flex items-center justify-between px-5 h-14 border-b border-hairline">
-              <img src={alphaLogo} alt="Alpha Store" className="h-9 w-auto" />
+              <img src={alphaLogo} alt="Alpha Store" loading="lazy" decoding="async" className="h-9 w-auto" />
               <button
                 onClick={() => setMenuOpen(false)}
                 className="text-muted-foreground hover:text-foreground"

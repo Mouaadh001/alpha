@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { productByFamilyFirstQO, homepageSectionsQO } from "@/lib/queries";
-import ps5 from "@/assets/float-ps5-console.png";
-import ps4 from "@/assets/console-ps4.png";
-import xboxX from "@/assets/float-xbox-console.png";
-import xboxS from "@/assets/float-xbox-s.png";
+import ps5 from "@/assets/float-ps5-console.webp";
+import ps4 from "@/assets/console-ps4.webp";
+import xboxX from "@/assets/float-xbox-console.webp";
+import xboxS from "@/assets/float-xbox-s.webp";
 
 type Item = {
   key: string;
@@ -109,6 +109,7 @@ function ConsoleCard({ item: it, locale }: { item: Item; locale: string }) {
                 src={it.image}
                 alt={it.title}
                 loading="lazy"
+                decoding="async"
                 className={`max-h-full max-w-full object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.35)] ${it.float}`}
               />
             </div>

@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useT, useI18n } from "@/lib/i18n";
 import { Instagram, Facebook } from "lucide-react";
-import alphaLogo from "@/assets/alpha-logo.png";
+import alphaLogo from "@/assets/alpha-logo.webp";
 
 const INSTAGRAM_URL = "https://www.instagram.com/alpha.store.eleulma?igsh=MW9rNmlqZGRleDZ2aA==";
 const FACEBOOK_URL = "https://www.facebook.com/share/196VyBTVGN/?mibextid=wwXIfr";
@@ -24,7 +24,7 @@ export function SiteFooter() {
       <div className="max-w-[1600px] mx-auto px-6 pt-24 pb-16 border-b border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr_1fr] gap-12">
           <div>
-            <img src={alphaLogo} alt="Alpha Store" className="h-16 w-auto mb-6" />
+            <img src={alphaLogo} alt="Alpha Store" loading="lazy" decoding="async" className="h-16 w-auto mb-6" />
             <div className="flex items-center gap-3 mt-6">
               {[
                 { i: Instagram, l: "Instagram", href: INSTAGRAM_URL },
@@ -75,7 +75,7 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="max-w-[1600px] mx-auto px-6 py-12 flex flex-col items-center justify-center gap-6">
-          <img src={alphaLogo} alt="Alpha Store" className="h-32 md:h-40 w-auto opacity-95" />
+          <img src={alphaLogo} alt="Alpha Store" loading="lazy" decoding="async" className="h-32 md:h-40 w-auto opacity-95" />
           <p className="text-[10px] text-white/60 uppercase tracking-widest">© {new Date().getFullYear()} Alpha Store. {locale === "fr" ? "Tous droits réservés." : "جميع الحقوق محفوظة."}</p>
         </div>
       </div>
