@@ -31,7 +31,7 @@ const schema = z.object({
   storage_option_1: z.string().trim().max(40).nullable(),
   storage_option_2: z.string().trim().max(40).nullable(),
   price_da_option_2: z.number().int().min(0).nullable(),
-  family_key: z.string().trim().max(60).nullable(),
+
 });
 
 type FormState = {
@@ -43,7 +43,7 @@ type FormState = {
   storage_option_1: string;
   storage_option_2: string;
   price_da_option_2: string;
-  family_key: string;
+
   stock: string;
 };
 
@@ -57,7 +57,7 @@ function fromProduct(p: Product): FormState {
     storage_option_1: p.storage_option_1 ?? "",
     storage_option_2: p.storage_option_2 ?? "",
     price_da_option_2: p.price_da_option_2 ? String(p.price_da_option_2) : "",
-    family_key: p.family_key ?? "",
+
     stock: String(p.stock ?? 0),
   };
 }
@@ -71,7 +71,7 @@ const EMPTY: FormState = {
   storage_option_1: "",
   storage_option_2: "",
   price_da_option_2: "",
-  family_key: "",
+
   stock: "1",
 };
 
@@ -105,7 +105,6 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
         storage_option_1: form.storage_option_1.trim() || null,
         storage_option_2: form.storage_option_2.trim() || null,
         price_da_option_2: form.price_da_option_2 ? Number(form.price_da_option_2) : null,
-        family_key: form.family_key.trim() || null,
       });
       const stockVal = Math.max(0, Math.floor(Number(form.stock || 0)));
 
@@ -123,7 +122,6 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
         storage_option_1: parsed.storage_option_1,
         storage_option_2: parsed.storage_option_2,
         price_da_option_2: parsed.price_da_option_2,
-        family_key: parsed.family_key,
         stock: stockVal,
       };
 
@@ -236,18 +234,7 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
         </div>
       </div>
 
-      <div>
-        <label className={lblCls}>Groupe / Famille (optionnel)</label>
-        <input
-          value={form.family_key}
-          onChange={(e) => set("family_key", e.target.value)}
-          className={fieldCls}
-          placeholder="Ex: ps5-slim, xbox-series-x"
-        />
-        <div className="text-[12px] text-white/50 mt-2">
-          Les produits partageant la même clé s'affichent comme éditions sur la page produit.
-        </div>
-      </div>
+
 
       <div>
         <label className={lblCls}>Description</label>

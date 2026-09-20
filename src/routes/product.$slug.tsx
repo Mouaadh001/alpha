@@ -7,7 +7,6 @@ import {
   productBySlugQO,
   categoriesQO,
   productsByCategoryPreviewQO,
-  productFamilyQO,
 } from "@/lib/queries";
 import { useI18n, useT } from "@/lib/i18n";
 import { formatDA } from "@/lib/format";
@@ -38,8 +37,7 @@ async function sendOrderEmail(orderId: string) {
 }
 
 export const Route = createFileRoute("/product/$slug")({
-  validateSearch: (s: Record<string, unknown>): { family?: 1 } =>
-    s.family === "1" || s.family === 1 ? { family: 1 } : {},
+  validateSearch: () => ({}),
   head: ({ params }) => ({
     meta: [
       { title: `${params.slug} — Alpha Store` },
@@ -53,9 +51,6 @@ export const Route = createFileRoute("/product/$slug")({
     ]);
     if (!product) throw notFound();
     await context.queryClient.ensureQueryData(productsByCategoryPreviewQO(product.category_id));
-    if (product.family_key) {
-      await context.queryClient.ensureQueryData(productFamilyQO(product.family_key));
-    }
     return { product };
   },
   component: ProductPage,
@@ -70,21 +65,12 @@ export const Route = createFileRoute("/product/$slug")({
 function ProductPage() {
   const { slug } = Route.useParams();
   const loadedProduct = useQuery(productBySlugQO(slug)).data!;
-  const search = Route.useSearch();
-  const showFamilyPicker = search.family === 1;
   const { locale } = useI18n();
+  const product = loadedProduct;
   const t = useT();
   const navigate = useNavigate();
   const { data: categories = [] } = useQuery(categoriesQO);
   const { data: related = [] } = useQuery(productsByCategoryPreviewQO(loadedProduct.category_id));
-  const { data: family = [] } = useQuery({
-    ...productFamilyQO(loadedProduct.family_key ?? ""),
-    enabled: !!loadedProduct.family_key,
-  });
-  const familySiblings = family.filter((p) => p.family_key === loadedProduct.family_key);
-
-  const [selectedSiblingId, setSelectedSiblingId] = useState<string | null>(null);
-  const product = (selectedSiblingId && familySiblings.find((p) => p.id === selectedSiblingId)) || loadedProduct;
 
   const cat = categories.find((c) => c.id === product.category_id);
   const name = locale === "ar" && product.name_ar ? product.name_ar : product.name_fr;
@@ -267,28 +253,6 @@ function ProductPage() {
               </div>
             </div>
 
-            {/* ── Edition picker ── */}
-            {showFamilyPicker && familySiblings.length > 1 && (
-              <div>
-                <p className="eyebrow mb-3">{locale === "fr" ? "Choisissez l'édition" : "اختر الإصدار"}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {familySiblings.map((sibling) => {
-                    const sName = locale === "ar" && sibling.name_ar ? sibling.name_ar : sibling.name_fr;
-                    const parentName = locale === "ar" && product.name_ar ? product.name_ar : product.name_fr;
-                    const prefix = parentName.split(" ").slice(0, 3).join(" ");
-                    const shortLabel = sName.toLowerCase().startsWith(prefix.toLowerCase()) ? sName.slice(prefix.length).trim() || sName : sName;
-                    const isActive = sibling.id === product.id;
-                    return (
-                      <button key={sibling.id} type="button" onClick={() => { if (!isActive) setSelectedSiblingId(sibling.id); }}
-                        className={`h-16 rounded-xl border px-3 text-start transition-all duration-200 ${isActive ? "border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/20" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20"}`}>
-                        <span className="block text-sm font-bold text-white">{shortLabel}</span>
-                        <span className="block text-xs font-mono text-white/50">{formatDA(sibling.price_da, locale)}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* ── Storage / Size picker ── */}
             {hasVariants && (
