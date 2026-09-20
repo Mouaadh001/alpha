@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")(  {
   }),
   component: Home,
   errorComponent: ({ error }) => (
-    <SiteShell><div className="max-w-3xl mx-auto p-12">Une erreur est survenue. {error.message}</div></SiteShell>
+    <SiteShell><div className="max-w-3xl mx-auto p-12">Une erreur est survenue. {(error as Error).message}</div></SiteShell>
   ),
   notFoundComponent: () => <SiteShell><div className="p-12">Introuvable</div></SiteShell>,
 });
@@ -49,12 +49,12 @@ export function Home() {
       {/* Nos catégories */}
       <section className="max-w-[1600px] mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-6">
         <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-4 md:p-6">
-          <h2 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl tracking-tight mb-6 md:mb-10">
+          <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight mb-5 md:mb-8">
             {locale === "fr" ? "Nos catégories" : "فئاتنا"}
           </h2>
-          <div className="grid grid-cols-1 gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             {categories.map((c, i) => (
-              <Reveal key={c.id} delay={Math.min(i, 6) * 40}>
+              <Reveal key={c.id} delay={Math.min(i, 8) * 35}>
                 <CategoryTile category={c} />
               </Reveal>
             ))}

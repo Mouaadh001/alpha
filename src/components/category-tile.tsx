@@ -50,30 +50,32 @@ export function CategoryTile({ category }: { category: Category; index?: number;
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className={`group relative block overflow-hidden rounded-3xl aspect-[16/10] shadow-[0_20px_60px_-20px_rgba(139,92,246,0.35)] transition-transform duration-200 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.03]`}
+      className={`group relative block overflow-hidden rounded-2xl aspect-[4/3] shadow-[0_10px_30px_-12px_rgba(139,92,246,0.4)] transition-all duration-200 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_18px_48px_-14px_rgba(139,92,246,0.6)]`}
     >
-      {!img && <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />}
+      {/* gradient fallback */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
+
       {img && (
         <img
           src={img}
           alt={name}
           loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[250ms] ease-out group-hover:scale-[1.06] will-change-transform"
+          className="absolute inset-0 w-full h-full object-cover opacity-70 mix-blend-luminosity transition-transform duration-300 ease-out group-hover:scale-[1.08] will-change-transform"
         />
       )}
 
-      {/* Top pill */}
-      <div className="absolute top-3 start-3 sm:top-4 sm:start-4 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md text-[10px] sm:text-[11px] font-bold tracking-wider text-white">
-        {label}
+      {/* dark gradient overlay for text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+
+      {/* arrow top-right */}
+      <div className="absolute top-2.5 end-2.5 size-7 rounded-full bg-white/15 backdrop-blur-sm grid place-items-center text-white transition-transform duration-200 ease-out group-hover:rotate-45">
+        <ArrowUpRight className="size-3.5" />
       </div>
-      {/* Top arrow */}
-      <div className="absolute top-3 end-3 sm:top-4 sm:end-4 size-9 sm:size-10 rounded-full bg-white/15 backdrop-blur-md grid place-items-center text-white transition-transform duration-200 ease-out group-hover:rotate-45">
-        <ArrowUpRight className="size-4" />
-      </div>
-      {/* Bottom giant title */}
-      <div className="absolute bottom-3 start-3 sm:bottom-5 sm:start-5 end-3">
-        <h3 className="font-display font-extrabold text-white text-2xl sm:text-4xl md:text-5xl leading-[0.9] tracking-tight drop-shadow-lg">
-          {name.toUpperCase()}
+
+      {/* name bottom */}
+      <div className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-6">
+        <h3 className="font-display font-extrabold text-white text-base sm:text-lg leading-tight tracking-tight drop-shadow-lg">
+          {name}
         </h3>
       </div>
     </Link>
