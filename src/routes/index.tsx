@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteShell } from "@/components/site-shell";
 import { ProductCard } from "@/components/product-card";
+import { CategoryTile } from "@/components/category-tile";
 import { GamingHero } from "@/components/gaming-hero";
 import { SpaceBackdrop } from "@/components/space-backdrop";
 import { Reveal } from "@/components/reveal";
@@ -44,6 +45,22 @@ export function Home() {
     <SiteShell>
       {/* Cinematic gaming hero */}
       <GamingHero />
+
+      {/* Nos catégories */}
+      <section className="max-w-[1600px] mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-6">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-4 md:p-6">
+          <h2 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl tracking-tight mb-6 md:mb-10">
+            {locale === "fr" ? "Nos catégories" : "فئاتنا"}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:gap-5">
+            {categories.map((c, i) => (
+              <Reveal key={c.id} delay={Math.min(i, 6) * 40}>
+                <CategoryTile category={c} />
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Nos produits */}
       <section className="relative overflow-hidden pt-14 pb-16 mt-6">
