@@ -1,0 +1,34 @@
+name: Keep Alive - Daily Ping
+
+on:
+  schedule:
+    # Runs every day at 8:00 AM UTC (9:00 AM Algeria time)
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping:
+    name: Ping Website & Supabase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Vercel Website
+        run: |
+          echo "🔁 Pinging Alpha Store..."
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 "${{ secrets.SITE_URL }}")
+          echo "✅ Response status: $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
+            echo "❌ Site returned bad status: $STATUS"
+            exit 1
+          fi
+
+      - name: Ping Supabase Health
+        run: |
+          echo "🔁 Pinging Supabase..."
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 30 \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/")
+          echo "✅ Supabase response status: $STATUS"
+
+      - name: Done
+        run: echo "🎉 Keep-alive ping completed successfully!"
