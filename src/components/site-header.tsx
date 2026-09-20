@@ -6,7 +6,7 @@ import { useCart } from "@/lib/cart";
 import { useI18n, useT } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { useQuery } from "@tanstack/react-query";
-import { categoriesQO, subcategoriesQO } from "@/lib/queries";
+import { categoriesQO } from "@/lib/queries";
 import alphaLogo from "@/assets/alpha-logo.webp";
 
 const INSTAGRAM_URL = "https://www.instagram.com/alpha.store.eleulma?igsh=MW9rNmlqZGRleDZ2aA==";
@@ -32,7 +32,6 @@ export function SiteHeader() {
   const [menuQuery, setMenuQuery] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const { data: categories = [] } = useQuery(categoriesQO);
-  const { data: subcategories = [] } = useQuery(subcategoriesQO);
 
   useEffect(() => {
     // preload session listener kept elsewhere; header no longer needs account state
@@ -48,11 +47,6 @@ export function SiteHeader() {
     ? categories.filter((c) =>
         (c.name_fr + " " + (c.name_ar ?? "")).toLowerCase().includes(query.toLowerCase())
       )
-    : [];
-  const filteredSubs = query
-    ? subcategories.filter((s) =>
-        (s.name_fr + " " + (s.name_ar ?? "")).toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 8)
     : [];
 
   return (
@@ -129,7 +123,7 @@ export function SiteHeader() {
                 className="flex-1 bg-transparent text-2xl md:text-4xl font-display font-bold uppercase tracking-tight focus:outline-none placeholder:text-muted-foreground/40"
               />
             </div>
-            {query && (filteredCats.length > 0 || filteredSubs.length > 0) && (
+            {query && filteredCats.length > 0 && (
               <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div>
                   <span className="eyebrow mb-4 block">{t.categories}</span>
@@ -149,31 +143,10 @@ export function SiteHeader() {
                     ))}
                   </ul>
                 </div>
-                <div>
-                  <span className="eyebrow mb-4 block">{t.subcategories}</span>
-                  <ul className="space-y-2">
-                    {filteredSubs.map((s) => {
-                      const cat = categories.find((c) => c.id === s.category_id);
-                      if (!cat) return null;
-                      return (
-                        <li key={s.id}>
-                          <Link
-                            to="/category/$slug/$sub"
-                            params={{ slug: cat.slug, sub: s.slug }}
-                            onClick={() => { setSearchOpen(false); setQuery(""); }}
-                            className="group flex items-center justify-between py-3 border-b border-hairline hover:border-lime"
-                          >
-                            <span className="text-sm">{s.name_fr} <span className="text-muted-foreground text-xs ms-2">· {cat.name_fr}</span></span>
-                            <ArrowRight className="size-4 text-muted-foreground group-hover:text-lime group-hover:translate-x-1 transition" />
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+
               </div>
             )}
-            {query && filteredCats.length === 0 && filteredSubs.length === 0 && (
+            {query && filteredCats.length === 0 && (
               <p className="mt-12 text-muted-foreground text-sm">
                 {locale === "fr" ? "Aucun résultat pour" : "لا نتائج لـ"} “{query}”.
               </p>
@@ -235,10 +208,7 @@ export function SiteHeader() {
             {/* Category list */}
             <nav className="flex-1 overflow-y-auto">
               {categories.map((c) => {
-                const subs = subcategories.filter((s) => s.category_id === c.id);
                 const name = locale === "ar" && c.name_ar ? c.name_ar : c.name_fr;
-                const hasSubs = subs.length > 0;
-                const isOpen = expanded === c.id;
                 return (
                   <div key={c.id} className="border-b border-hairline">
                     <div className="flex items-stretch">
@@ -250,32 +220,7 @@ export function SiteHeader() {
                       >
                         {name}
                       </Link>
-                      {hasSubs && (
-                        <button
-                          onClick={() => setExpanded(isOpen ? null : c.id)}
-                          className="px-5 border-s border-hairline text-muted-foreground hover:text-foreground"
-                          aria-label="Toggle"
-                        >
-                          {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-                        </button>
-                      )}
                     </div>
-                    {hasSubs && isOpen && (
-                      <ul className="bg-muted/20">
-                        {subs.map((s) => (
-                          <li key={s.id}>
-                            <Link
-                              to="/category/$slug/$sub"
-                              params={{ slug: c.slug, sub: s.slug }}
-                              onClick={() => setMenuOpen(false)}
-                              className="block px-8 py-3 text-sm text-muted-foreground hover:text-lime transition-colors"
-                            >
-                              {locale === "ar" && s.name_ar ? s.name_ar : s.name_fr}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
                   </div>
                 );
               })}

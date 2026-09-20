@@ -8,7 +8,7 @@ import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/cart")({
   head: () => ({ meta: [{ title: "Panier — Alpha Store" }] }),
   component: CartPage,
-  errorComponent: ({ error }) => <SiteShell><div className="p-12">{error.message}</div></SiteShell>,
+  errorComponent: ({ error }) => <SiteShell><div className="p-12">{(error as Error).message}</div></SiteShell>,
   notFoundComponent: () => <SiteShell><div className="p-12">Introuvable</div></SiteShell>,
 });
 

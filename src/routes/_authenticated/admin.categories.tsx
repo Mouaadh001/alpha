@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { categoriesQO, subcategoriesQO, allProductsAdminQO, type Category } from "@/lib/queries";
+import { categoriesQO, allProductsAdminQO, type Category } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/format";
 import { toast } from "sonner";
@@ -21,7 +21,6 @@ export const Route = createFileRoute("/_authenticated/admin/categories")({
 function CategoriesAdmin() {
   const qc = useQueryClient();
   const { data: categories = [] } = useQuery(categoriesQO);
-  const { data: subs = [] } = useQuery(subcategoriesQO);
   const { data: products = [] } = useQuery(allProductsAdminQO);
   const [editing, setEditing] = useState<Category | "new" | null>(null);
   const [confirmDel, setConfirmDel] = useState<Category | null>(null);
@@ -49,10 +48,9 @@ function CategoriesAdmin() {
   return (
     <AdminPage
       title="Catégories"
-      subtitle={`${categories.length} catégorie(s) · ${subs.length} sous-catégorie(s)`}
+      subtitle={`${categories.length} catégorie(s)`}
       actions={
         <>
-          <Link to="/admin/subcategories" className={btnSecondary}><Layers className="size-4" /> Sous-catégories</Link>
           <button onClick={() => setEditing("new")} className={btnPrimary}><Plus className="size-4" /> Nouvelle</button>
         </>
       }
@@ -65,7 +63,6 @@ function CategoriesAdmin() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((c) => {
             const productCount = products.filter((p) => p.category_id === c.id).length;
-            const subCount = subs.filter((s) => s.category_id === c.id).length;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const visible = (c as any).visible !== false;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,8 +91,6 @@ function CategoriesAdmin() {
                   </div>
                   <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{productCount} produit(s)</span>
-                    <span>·</span>
-                    <span>{subCount} sous-cat.</span>
                   </div>
                   <div className="mt-4 flex items-center gap-2">
                     <button onClick={() => setEditing(c)} className={btnSecondary + " flex-1 !py-2 !px-3 !text-xs"}><Pencil className="size-3.5" /> Modifier</button>
@@ -122,7 +117,7 @@ function CategoriesAdmin() {
       <ConfirmDialog
         open={!!confirmDel}
         title={`Supprimer « ${confirmDel?.name_fr ?? ""} » ?`}
-        description="Les sous-catégories liées seront également supprimées. Cette action est irréversible."
+        description="Cette action est irréversible."
         confirmLabel="Supprimer"
         danger
         onCancel={() => setConfirmDel(null)}
@@ -185,20 +180,12 @@ function CategoryEditor({ category, onClose, onSaved }: { category: Category | n
         <div className="p-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Nom (FR) *</label>
+              <label className={labelCls}>Nom de la catégorie *</label>
               <input value={form.name_fr} onChange={(e) => setForm({ ...form, name_fr: e.target.value })} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Nom (AR)</label>
-              <input value={form.name_ar} onChange={(e) => setForm({ ...form, name_ar: e.target.value })} className={inputCls} dir="rtl" />
-            </div>
-            <div>
-              <label className={labelCls}>Slug (URL)</label>
-              <input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className={inputCls} placeholder="auto" />
-            </div>
-            <div>
               <label className={labelCls}>Ordre d'affichage</label>
-              <input type="number" value={form.position} onChange={(e) => setForm({ ...form, position: Number(e.target.value) })} className={inputCls} />
+              <input type="number" min={0} value={form.position} onChange={(e) => setForm({ ...form, position: Math.max(0, Number(e.target.value)) })} className={inputCls} />
             </div>
           </div>
 
@@ -209,13 +196,7 @@ function CategoryEditor({ category, onClose, onSaved }: { category: Category | n
             label="Image de couverture (carrée)"
             aspect="square"
           />
-          <SingleImageUploader
-            bucket="category-images"
-            value={form.banner_url}
-            onChange={(url) => setForm({ ...form, banner_url: url })}
-            label="Bannière (large)"
-            aspect="banner"
-          />
+
         </div>
         <div className="sticky bottom-0 p-4 border-t border-hairline bg-card flex justify-end gap-2">
           <button onClick={onClose} className={btnSecondary}>Annuler</button>

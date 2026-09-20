@@ -52,7 +52,7 @@ export function CategoryTile({ category }: { category: Category; index?: number;
       params={{ slug: category.slug }}
       className={`group relative block overflow-hidden rounded-2xl aspect-[4/3] shadow-[0_10px_30px_-12px_rgba(139,92,246,0.4)] transition-all duration-200 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.03] hover:shadow-[0_18px_48px_-14px_rgba(139,92,246,0.6)]`}
     >
-      {/* gradient fallback */}
+      {/* Base placeholder tint in case image fails to load */}
       <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
 
       {img && (
@@ -60,7 +60,7 @@ export function CategoryTile({ category }: { category: Category; index?: number;
           src={img}
           alt={name}
           loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover opacity-70 mix-blend-luminosity transition-transform duration-300 ease-out group-hover:scale-[1.08] will-change-transform"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 will-change-transform"
         />
       )}
 
@@ -73,8 +73,8 @@ export function CategoryTile({ category }: { category: Category; index?: number;
       </div>
 
       {/* name bottom */}
-      <div className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-6">
-        <h3 className="font-display font-extrabold text-white text-base sm:text-lg leading-tight tracking-tight drop-shadow-lg">
+      <div className="absolute bottom-0 inset-x-0 px-3 md:px-4 pb-3 md:pb-4 pt-12">
+        <h3 className="font-display font-black text-white text-lg sm:text-xl md:text-2xl leading-[1.1] tracking-tight drop-shadow-lg uppercase">
           {name}
         </h3>
       </div>

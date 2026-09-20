@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Connexion — Alpha Store" }] }),
   component: AuthPage,
-  errorComponent: ({ error }) => <SiteShell><div className="p-12">{error.message}</div></SiteShell>,
+  errorComponent: ({ error }) => <SiteShell><div className="p-12">{(error as Error).message}</div></SiteShell>,
   notFoundComponent: () => <SiteShell><div className="p-12">Introuvable</div></SiteShell>,
 });
 

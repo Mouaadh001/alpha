@@ -26,7 +26,6 @@ import { Route as AuthenticatedAdminCustomersRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminHomepageRouteImport } from './routes/_authenticated/admin.homepage'
 import { Route as AuthenticatedAdminOrdersRouteImport } from './routes/_authenticated/admin.orders'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
-import { Route as AuthenticatedAdminSubcategoriesRouteImport } from './routes/_authenticated/admin.subcategories'
 import { Route as CategorySlugIndexRouteImport } from './routes/category.$slug.index'
 import { Route as CategorySlugSubRouteImport } from './routes/category.$slug.$sub'
 import { Route as AuthenticatedAdminOrdersIdRouteImport } from './routes/_authenticated/admin.orders.$id'
@@ -124,12 +123,6 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminSubcategoriesRoute =
-  AuthenticatedAdminSubcategoriesRouteImport.update({
-    id: '/subcategories',
-    path: '/subcategories',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const CategorySlugIndexRoute = CategorySlugIndexRouteImport.update({
   id: '/category/$slug/',
   path: '/category/$slug/',
@@ -181,7 +174,6 @@ export interface FileRoutesByFullPath {
   '/admin/homepage': typeof AuthenticatedAdminHomepageRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRouteWithChildren
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/subcategories': typeof AuthenticatedAdminSubcategoriesRoute
   '/category/$slug/$sub': typeof CategorySlugSubRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/category/$slug/': typeof CategorySlugIndexRoute
@@ -205,7 +197,6 @@ export interface FileRoutesByTo {
   '/admin/homepage': typeof AuthenticatedAdminHomepageRoute
   '/admin/orders': typeof AuthenticatedAdminOrdersRouteWithChildren
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/subcategories': typeof AuthenticatedAdminSubcategoriesRoute
   '/category/$slug/$sub': typeof CategorySlugSubRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/category/$slug': typeof CategorySlugIndexRoute
@@ -232,7 +223,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/homepage': typeof AuthenticatedAdminHomepageRoute
   '/_authenticated/admin/orders': typeof AuthenticatedAdminOrdersRouteWithChildren
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/_authenticated/admin/subcategories': typeof AuthenticatedAdminSubcategoriesRoute
   '/category/$slug/$sub': typeof CategorySlugSubRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/category/$slug/': typeof CategorySlugIndexRoute
@@ -259,7 +249,6 @@ export interface FileRouteTypes {
     | '/admin/homepage'
     | '/admin/orders'
     | '/admin/settings'
-    | '/admin/subcategories'
     | '/category/$slug/$sub'
     | '/admin/'
     | '/category/$slug/'
@@ -283,7 +272,6 @@ export interface FileRouteTypes {
     | '/admin/homepage'
     | '/admin/orders'
     | '/admin/settings'
-    | '/admin/subcategories'
     | '/category/$slug/$sub'
     | '/admin'
     | '/category/$slug'
@@ -309,7 +297,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/homepage'
     | '/_authenticated/admin/orders'
     | '/_authenticated/admin/settings'
-    | '/_authenticated/admin/subcategories'
     | '/category/$slug/$sub'
     | '/_authenticated/admin/'
     | '/category/$slug/'
@@ -454,13 +441,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/subcategories': {
-      id: '/_authenticated/admin/subcategories'
-      path: '/subcategories'
-      fullPath: '/admin/subcategories'
-      preLoaderRoute: typeof AuthenticatedAdminSubcategoriesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/category/$slug/': {
       id: '/category/$slug/'
       path: '/category/$slug'
@@ -527,7 +507,6 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminHomepageRoute: typeof AuthenticatedAdminHomepageRoute
   AuthenticatedAdminOrdersRoute: typeof AuthenticatedAdminOrdersRouteWithChildren
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
-  AuthenticatedAdminSubcategoriesRoute: typeof AuthenticatedAdminSubcategoriesRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProductsIdRoute: typeof AuthenticatedAdminProductsIdRoute
   AuthenticatedAdminProductsNewRoute: typeof AuthenticatedAdminProductsNewRoute
@@ -541,7 +520,6 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminHomepageRoute: AuthenticatedAdminHomepageRoute,
   AuthenticatedAdminOrdersRoute: AuthenticatedAdminOrdersRouteWithChildren,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
-  AuthenticatedAdminSubcategoriesRoute: AuthenticatedAdminSubcategoriesRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminProductsIdRoute: AuthenticatedAdminProductsIdRoute,
   AuthenticatedAdminProductsNewRoute: AuthenticatedAdminProductsNewRoute,
