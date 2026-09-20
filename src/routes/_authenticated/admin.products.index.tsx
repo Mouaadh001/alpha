@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { allProductsAdminQO, categoriesQO, subcategoriesQO } from "@/lib/queries";
+import { allProductsAdminQO, categoriesQO } from "@/lib/queries";
 import { formatDA } from "@/lib/format";
 import { Trash2, Plus, Search, Filter, Pencil, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,11 +19,9 @@ function ProductsList() {
   const qc = useQueryClient();
   const { data: products = [] } = useQuery(allProductsAdminQO);
   const { data: categories = [] } = useQuery(categoriesQO);
-  const { data: subs = [] } = useQuery(subcategoriesQO);
 
   const [q, setQ] = useState("");
   const [catId, setCatId] = useState("");
-  const [subId, setSubId] = useState("");
   const [stockFilter, setStockFilter] = useState<"" | "in" | "low" | "out">("");
   const [status, setStatus] = useState<"" | "active" | "inactive">("");
   const [showFilters, setShowFilters] = useState(false);
@@ -39,18 +37,16 @@ function ProductsList() {
       list = list.filter((p) => p.name_fr.toLowerCase().includes(s) || (p.brand?.toLowerCase() ?? "").includes(s) || (p.sku?.toLowerCase() ?? "").includes(s) || p.slug.includes(s));
     }
     if (catId) list = list.filter((p) => p.category_id === catId);
-    if (subId) list = list.filter((p) => p.subcategory_id === subId);
     if (stockFilter === "in") list = list.filter((p) => p.stock > 3);
     if (stockFilter === "low") list = list.filter((p) => p.stock > 0 && p.stock <= 3);
     if (stockFilter === "out") list = list.filter((p) => p.stock === 0);
     if (status === "active") list = list.filter((p) => p.active);
     if (status === "inactive") list = list.filter((p) => !p.active);
     return list;
-  }, [products, q, catId, subId, stockFilter, status]);
+  }, [products, q, catId, stockFilter, status]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const availableSubs = subs.filter((s) => !catId || s.category_id === catId);
 
   const deleteMany = async (ids: string[]) => {
     const { error } = await supabase.from("products").delete().in("id", ids);
@@ -96,7 +92,7 @@ function ProductsList() {
         {/* Category chips — quick filter */}
         <div className="mt-3 -mx-1 px-1 flex gap-2 overflow-x-auto scrollbar-none">
           <button
-            onClick={() => { setCatId(""); setSubId(""); setPage(1); }}
+            onClick={() => { setCatId(""); setPage(1); }}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${catId === "" ? "bg-accent text-accent-foreground border-accent" : "border-hairline text-muted-foreground hover:text-foreground"}`}
           >
             Toutes ({products.length})
@@ -106,7 +102,7 @@ function ProductsList() {
             return (
               <button
                 key={c.id}
-                onClick={() => { setCatId(c.id); setSubId(""); setPage(1); }}
+                onClick={() => { setCatId(c.id); setPage(1); }}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap ${catId === c.id ? "bg-accent text-accent-foreground border-accent" : "border-hairline text-muted-foreground hover:text-foreground"}`}
               >
                 {c.name_fr} ({count})
@@ -114,37 +110,11 @@ function ProductsList() {
             );
           })}
         </div>
-        {catId && availableSubs.length > 0 && (
-          <div className="mt-2 -mx-1 px-1 flex gap-2 overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => { setSubId(""); setPage(1); }}
-              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${subId === "" ? "bg-foreground/10 border-foreground/20" : "border-hairline text-muted-foreground hover:text-foreground"}`}
-            >
-              Toutes sous-cat.
-            </button>
-            {availableSubs.map((s) => {
-              const count = products.filter((p) => p.subcategory_id === s.id).length;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => { setSubId(s.id); setPage(1); }}
-                  className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors whitespace-nowrap ${subId === s.id ? "bg-foreground/10 border-foreground/20" : "border-hairline text-muted-foreground hover:text-foreground"}`}
-                >
-                  {s.name_fr} ({count})
-                </button>
-              );
-            })}
-          </div>
-        )}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-hairline grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <select value={catId} onChange={(e) => { setCatId(e.target.value); setSubId(""); setPage(1); }} className={inputCls}>
+          <div className="mt-3 pt-3 border-t border-hairline grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <select value={catId} onChange={(e) => { setCatId(e.target.value); setPage(1); }} className={inputCls}>
               <option value="">Toutes catégories</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name_fr}</option>)}
-            </select>
-            <select value={subId} onChange={(e) => { setSubId(e.target.value); setPage(1); }} className={inputCls} disabled={!catId}>
-              <option value="">Toutes sous-cat.</option>
-              {availableSubs.map((s) => <option key={s.id} value={s.id}>{s.name_fr}</option>)}
             </select>
             <select value={stockFilter} onChange={(e) => { setStockFilter(e.target.value as typeof stockFilter); setPage(1); }} className={inputCls}>
               <option value="">Tout stock</option>

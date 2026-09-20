@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { categoriesQO, subcategoriesQO, type Product } from "@/lib/queries";
+import { categoriesQO, type Product } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/format";
 import { toast } from "sonner";
@@ -27,7 +27,6 @@ const schema = z.object({
   price_da: z.number().int().min(0),
   compare_at_price_da: z.number().int().min(0).nullable(),
   category_id: z.string().uuid("Vous devez choisir une catégorie."),
-  subcategory_id: z.string().uuid().nullable(),
   is_new: z.boolean(),
   storage_option_1: z.string().trim().max(40).nullable(),
   storage_option_2: z.string().trim().max(40).nullable(),
@@ -39,7 +38,7 @@ type FormState = {
   name_fr: string;
   description_fr: string;
   price_da: string; compare_at_price_da: string;
-  category_id: string; subcategory_id: string;
+  category_id: string;
   is_new: boolean;
   storage_option_1: string;
   storage_option_2: string;
@@ -53,7 +52,7 @@ function fromProduct(p: Product): FormState {
     name_fr: p.name_fr,
     description_fr: p.description_fr ?? "",
     price_da: String(p.price_da ?? ""), compare_at_price_da: p.compare_at_price_da ? String(p.compare_at_price_da) : "",
-    category_id: p.category_id, subcategory_id: p.subcategory_id ?? "",
+    category_id: p.category_id,
     is_new: !!p.is_new,
     storage_option_1: p.storage_option_1 ?? "",
     storage_option_2: p.storage_option_2 ?? "",
@@ -67,7 +66,7 @@ const EMPTY: FormState = {
   name_fr: "",
   description_fr: "",
   price_da: "", compare_at_price_da: "",
-  category_id: "", subcategory_id: "",
+  category_id: "",
   is_new: true,
   storage_option_1: "",
   storage_option_2: "",
@@ -80,7 +79,6 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: categories = [] } = useQuery(categoriesQO);
-  const { data: subcategories = [] } = useQuery(subcategoriesQO);
 
   const [form, setForm] = useState<FormState>(product ? fromProduct(product) : EMPTY);
   const [images, setImages] = useState<string[]>(product?.images ?? (product?.image_url ? [product.image_url] : []));
@@ -94,11 +92,6 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
 
-  const availableSubs = useMemo(
-    () => subcategories.filter((s) => s.category_id === form.category_id),
-    [subcategories, form.category_id],
-  );
-  const hasSubs = availableSubs.length > 0;
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -109,14 +102,12 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
         ...form,
         price_da: Number(form.price_da || 0),
         compare_at_price_da: form.compare_at_price_da ? Number(form.compare_at_price_da) : null,
-        subcategory_id: hasSubs ? (form.subcategory_id || null) : null,
         storage_option_1: form.storage_option_1.trim() || null,
         storage_option_2: form.storage_option_2.trim() || null,
         price_da_option_2: form.price_da_option_2 ? Number(form.price_da_option_2) : null,
         family_key: form.family_key.trim() || null,
       });
       const stockVal = Math.max(0, Math.floor(Number(form.stock || 0)));
-      if (hasSubs && !parsed.subcategory_id) throw new Error("Cette catégorie a des sous-catégories — choisissez-en une.");
 
       const cover = images[coverIdx] ?? images[0] ?? null;
       const payload = {
@@ -125,7 +116,6 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
         price_da: parsed.price_da,
         compare_at_price_da: parsed.compare_at_price_da,
         category_id: parsed.category_id,
-        subcategory_id: parsed.subcategory_id,
         image_url: cover,
         cover_image: cover,
         images,
@@ -172,20 +162,11 @@ export function ProductEditor({ product, onDone }: { product?: Product; onDone?:
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={lblCls}>Catégorie *</label>
-          <select required value={form.category_id} onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value, subcategory_id: "" }))} className={fieldCls}>
+          <select required value={form.category_id} onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))} className={fieldCls}>
             <option value="">— Choisir —</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name_fr}</option>)}
           </select>
         </div>
-        {form.category_id && hasSubs && (
-          <div>
-            <label className={lblCls}>Sous-catégorie *</label>
-            <select required value={form.subcategory_id} onChange={(e) => set("subcategory_id", e.target.value)} className={fieldCls}>
-              <option value="">— Choisir —</option>
-              {availableSubs.map((s) => <option key={s.id} value={s.id}>{s.name_fr}</option>)}
-            </select>
-          </div>
-        )}
       </div>
 
       <div>

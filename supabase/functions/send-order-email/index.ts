@@ -27,7 +27,9 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL");
     const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "Alpha Store <onboarding@resend.dev>";
-    const ADMIN_BASE_URL = (Deno.env.get("ADMIN_BASE_URL") || "https://alpha-rktkejilu-mouaadh-s-projects1.vercel.app").replace(/\/$/, "");
+    const ADMIN_BASE_URL = (
+      Deno.env.get("ADMIN_BASE_URL") || "https://alpha-rktkejilu-mouaadh-s-projects1.vercel.app"
+    ).replace(/\/$/, "");
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error("Supabase service credentials are not configured");
@@ -50,123 +52,120 @@ serve(async (req) => {
     if (itemsErr) throw new Error(`Items error: ${itemsErr?.message}`);
 
     const formatDA = (n: number) => `${n.toLocaleString("fr-DZ")} DA`;
+    const escapeHtml = (value: unknown) =>
+      String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    const orderDate = new Date(order.created_at).toLocaleDateString("fr-DZ", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const deliveryType = (order.notes ?? "").toLowerCase().includes("domicile")
+      ? "A domicile"
+      : "Bureau";
 
     const itemsRows = (items ?? [])
       .map(
         (i) => `
-        <tr style="border-bottom:1px solid #2a2a3a;">
-          <td style="padding:12px 8px;color:#e2e0ff;">
-            ${i.product_name}${i.variant ? ` <span style="color:#a78bfa;font-size:12px;">(${i.variant})</span>` : ""}
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#111827;">
+            ${escapeHtml(i.product_name)}
           </td>
-          <td style="padding:12px 8px;text-align:center;color:#a0a0b0;">${i.quantity}</td>
-          <td style="padding:12px 8px;text-align:right;color:#e2e0ff;font-family:monospace;">${formatDA(i.unit_price_da)}</td>
-          <td style="padding:12px 8px;text-align:right;color:#c4b5fd;font-weight:700;font-family:monospace;">${formatDA(i.line_total_da)}</td>
-        </tr>`
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;text-align:center;color:#374151;">${i.quantity}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;text-align:right;color:#111827;">${formatDA(i.line_total_da)}</td>
+        </tr>`,
       )
       .join("");
+
+    const itemsText = (items ?? [])
+      .map((i) => `- ${i.product_name} x${i.quantity}: ${formatDA(i.line_total_da)}`)
+      .join("\n");
+
+    const text = [
+      `Nouvelle commande Alpha Store #${order.order_number}`,
+      "",
+      `Client: ${order.full_name}`,
+      `Telephone: ${order.phone}`,
+      `Wilaya: ${order.wilaya}`,
+      `Commune: ${order.commune}`,
+      `Livraison: ${deliveryType}`,
+      order.notes ? `Notes: ${order.notes}` : null,
+      "",
+      "Produits:",
+      itemsText,
+      "",
+      `Total: ${formatDA(order.total_da)}`,
+      `Admin: ${ADMIN_BASE_URL}/admin/orders/${order.id}`,
+      "",
+      `Commande du ${orderDate}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const html = `
 <!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#070711;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="max-width:620px;margin:0 auto;padding:32px 16px;">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+  <div style="max-width:640px;margin:0 auto;padding:24px 16px;">
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;">
+      <h1 style="margin:0 0 6px;font-size:22px;line-height:1.25;color:#111827;">Nouvelle commande Alpha Store</h1>
+      <p style="margin:0 0 20px;color:#6b7280;font-size:14px;">Commande #${escapeHtml(order.order_number)} - ${orderDate}</p>
 
-    <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1a0a2e 0%,#12082a 100%);border:1px solid #2a1f4a;border-radius:16px;padding:28px 32px;margin-bottom:24px;text-align:center;">
-      <div style="font-size:28px;font-weight:900;letter-spacing:-0.5px;color:#fff;margin-bottom:4px;">
-        ALPHA<span style="color:#a855f7;">.</span>STORE
-      </div>
-      <div style="color:#a78bfa;font-size:13px;letter-spacing:2px;text-transform:uppercase;">Nouvelle commande reçue 🎉</div>
-    </div>
-
-    <!-- Order badge -->
-    <div style="background:#0f0a1e;border:1px solid #2a1f4a;border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="color:#6b6b8a;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">Numéro de commande</div>
-        <div style="color:#fff;font-size:22px;font-weight:800;font-family:monospace;">#${order.order_number}</div>
-      </div>
-      <div style="background:#a855f7;color:#fff;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;text-transform:uppercase;letter-spacing:1px;">
-        En attente
-      </div>
-    </div>
-
-    <!-- Customer info -->
-    <div style="background:#0f0a1e;border:1px solid #2a1f4a;border-radius:12px;padding:20px 24px;margin-bottom:16px;">
-      <div style="color:#a78bfa;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:14px;">👤 Informations client</div>
-      <table style="width:100%;border-collapse:collapse;">
-        <tr>
-          <td style="padding:5px 0;color:#6b6b8a;font-size:13px;width:120px;">Nom</td>
-          <td style="padding:5px 0;color:#e2e0ff;font-weight:600;">${order.full_name}</td>
-        </tr>
-        <tr>
-          <td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Téléphone</td>
-          <td style="padding:5px 0;color:#e2e0ff;font-weight:600;">${order.phone}</td>
-        </tr>
-        <tr>
-          <td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Wilaya</td>
-          <td style="padding:5px 0;color:#e2e0ff;font-weight:600;">${order.wilaya}</td>
-        </tr>
-        <tr>
-          <td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Commune</td>
-          <td style="padding:5px 0;color:#e2e0ff;font-weight:600;">${order.commune}</td>
-        </tr>
-        ${order.notes ? `<tr><td style="padding:5px 0;color:#6b6b8a;font-size:13px;">Notes</td><td style="padding:5px 0;color:#a78bfa;font-size:13px;">${order.notes}</td></tr>` : ""}
+      <h2 style="margin:0 0 10px;font-size:16px;color:#111827;">Client</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:22px;">
+        <tr><td style="padding:4px 0;color:#6b7280;width:120px;">Nom</td><td style="padding:4px 0;color:#111827;">${escapeHtml(order.full_name)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">Telephone</td><td style="padding:4px 0;color:#111827;">${escapeHtml(order.phone)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">Wilaya</td><td style="padding:4px 0;color:#111827;">${escapeHtml(order.wilaya)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">Commune</td><td style="padding:4px 0;color:#111827;">${escapeHtml(order.commune)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">Livraison</td><td style="padding:4px 0;color:#111827;">${escapeHtml(deliveryType)}</td></tr>
+        ${order.notes ? `<tr><td style="padding:4px 0;color:#6b7280;">Notes</td><td style="padding:4px 0;color:#111827;">${escapeHtml(order.notes)}</td></tr>` : ""}
       </table>
-    </div>
 
-    <!-- Order items -->
-    <div style="background:#0f0a1e;border:1px solid #2a1f4a;border-radius:12px;overflow:hidden;margin-bottom:16px;">
-      <div style="padding:16px 24px;border-bottom:1px solid #2a1f4a;">
-        <div style="color:#a78bfa;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">🛍️ Produits commandés</div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+      <h2 style="margin:0 0 10px;font-size:16px;color:#111827;">Produits</h2>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:18px;">
         <thead>
-          <tr style="background:#0a0718;">
-            <th style="padding:10px 8px;text-align:left;color:#6b6b8a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Produit</th>
-            <th style="padding:10px 8px;text-align:center;color:#6b6b8a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Qté</th>
-            <th style="padding:10px 8px;text-align:right;color:#6b6b8a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Prix unit.</th>
-            <th style="padding:10px 8px;text-align:right;color:#6b6b8a;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Total</th>
+          <tr>
+            <th style="padding:0 0 8px;text-align:left;color:#6b7280;font-size:12px;">Produit</th>
+            <th style="padding:0 0 8px;text-align:center;color:#6b7280;font-size:12px;">Qte</th>
+            <th style="padding:0 0 8px;text-align:right;color:#6b7280;font-size:12px;">Total</th>
           </tr>
         </thead>
         <tbody>${itemsRows}</tbody>
       </table>
-      <!-- Totals -->
-      <div style="padding:16px 24px;border-top:1px solid #2a1f4a;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <span style="color:#6b6b8a;font-size:13px;">Sous-total</span>
-          <span style="color:#e2e0ff;font-family:monospace;">${formatDA(order.subtotal_da)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid #2a1f4a;">
-          <span style="color:#fff;font-weight:800;font-size:16px;">TOTAL</span>
-          <span style="color:#a855f7;font-family:monospace;font-weight:800;font-size:18px;">${formatDA(order.total_da)}</span>
-        </div>
+
+      <div style="border-top:2px solid #111827;padding-top:14px;margin-bottom:22px;">
+        <p style="margin:0;text-align:right;font-size:18px;font-weight:700;color:#111827;">Total: ${formatDA(order.total_da)}</p>
       </div>
-    </div>
 
-    <!-- CTA -->
-    <div style="text-align:center;margin-bottom:24px;">
       <a href="${ADMIN_BASE_URL}/admin/orders/${order.id}"
-         style="display:inline-block;background:#a855f7;color:#fff;text-decoration:none;padding:14px 32px;border-radius:999px;font-weight:700;font-size:14px;letter-spacing:0.5px;">
-        Voir dans l'admin →
+         style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;font-size:14px;">
+        Voir la commande
       </a>
-    </div>
-
-    <!-- Footer -->
-    <div style="text-align:center;color:#3d3d5a;font-size:12px;">
-      Alpha Store — Algérie • Commande du ${new Date(order.created_at).toLocaleDateString("fr-DZ", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+      <p style="margin:22px 0 0;color:#9ca3af;font-size:12px;">Alpha Store - notification automatique de commande.</p>
     </div>
   </div>
 </body>
 </html>`;
 
-    if (isMissingEmailConfig(RESEND_API_KEY) || isMissingEmailConfig(ADMIN_EMAIL)) {
-      console.warn("send-order-email skipped: email provider is not configured");
+    const missingConfig = [
+      isMissingEmailConfig(RESEND_API_KEY) ? "RESEND_API_KEY" : null,
+      isMissingEmailConfig(ADMIN_EMAIL) ? "ADMIN_EMAIL" : null,
+    ].filter(Boolean);
+
+    if (missingConfig.length > 0) {
+      console.warn("send-order-email skipped: missing config:", missingConfig.join(", "));
       return jsonResponse({
         success: true,
         email_sent: false,
         skipped: true,
-        reason: "Email provider is not configured",
+        reason: `Missing email config: ${missingConfig.join(", ")}`,
       });
     }
 
@@ -180,7 +179,8 @@ serve(async (req) => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [ADMIN_EMAIL],
-        subject: `🛍️ Nouvelle commande #${order.order_number} — ${order.full_name} (${order.wilaya})`,
+        subject: `Nouvelle commande Alpha Store #${order.order_number}`,
+        text,
         html,
       }),
     });
@@ -198,13 +198,16 @@ serve(async (req) => {
         success: true,
         email_sent: false,
         warning: "Email provider rejected the message",
+        provider_status: resendRes.status,
+        provider_response: resendData,
       });
     }
 
     return jsonResponse({
       success: true,
       email_sent: true,
-      email_id: typeof resendData === "object" && resendData && "id" in resendData ? resendData.id : null,
+      email_id:
+        typeof resendData === "object" && resendData && "id" in resendData ? resendData.id : null,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

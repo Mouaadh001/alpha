@@ -10,14 +10,6 @@ export type Category = {
   image_url: string | null;
 };
 
-export type Subcategory = {
-  id: string;
-  category_id: string;
-  slug: string;
-  name_fr: string;
-  name_ar: string | null;
-  position: number;
-};
 
 export type Product = {
   id: string;
@@ -60,14 +52,6 @@ export const categoriesQO = queryOptions({
   },
 });
 
-export const subcategoriesQO = queryOptions({
-  queryKey: ["subcategories"],
-  queryFn: async (): Promise<Subcategory[]> => {
-    const { data, error } = await supabase.from("subcategories").select("*").order("position");
-    if (error) throw error;
-    return data ?? [];
-  },
-});
 
 export const featuredProductsQO = queryOptions({
   queryKey: ["products", "featured"],
@@ -112,19 +96,6 @@ export const productsByCategoryQO = (categoryId: string) => queryOptions({
   },
 });
 
-export const productsBySubcategoryQO = (subcategoryId: string) => queryOptions({
-  queryKey: ["products", "bySub", subcategoryId],
-  queryFn: async (): Promise<Product[]> => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("active", true)
-      .eq("subcategory_id", subcategoryId)
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return data ?? [];
-  },
-});
 
 export const productBySlugQO = (slug: string) => queryOptions({
   queryKey: ["product", slug],

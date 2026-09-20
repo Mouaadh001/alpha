@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   LayoutDashboard, Package, ShoppingBag, Users, Palette,
-  Megaphone, Settings, LogOut, Store, Menu, X, Bell, ChevronRight, ArrowLeft, ChevronDown, FolderTree, Layers,
+  Megaphone, Settings, LogOut, Store, Menu, X, Bell, ChevronRight, ArrowLeft, ChevronDown, FolderTree,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -16,7 +16,6 @@ const NAV: NavEntry[] = [
   { to: "/admin", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
   { to: "/admin/products", label: "Produits", icon: Package },
   { to: "/admin/categories", label: "Catégories", icon: FolderTree },
-  { to: "/admin/subcategories", label: "Sous-catégories", icon: Layers },
   { to: "/admin/orders", label: "Commandes", icon: ShoppingBag },
   { to: "/admin/customers", label: "Clients", icon: Users },
   { to: "/admin/homepage", label: "Page d'accueil", icon: Palette },
@@ -29,7 +28,6 @@ const LABELS: Record<string, string> = {
   products: "Produits",
   new: "Nouveau",
   categories: "Catégories",
-  subcategories: "Sous-catégories",
   orders: "Commandes",
   customers: "Clients",
   homepage: "Page d'accueil",
