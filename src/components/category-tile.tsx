@@ -25,108 +25,59 @@ const IMAGES: Record<string, string> = {
   accessoires: accImg,
 };
 
-/*
- * Brand bg colors — vivid, like the reference yellow site.
- * The product images have white/light backgrounds so we use object-contain
- * and let the brand color show around the product.
- */
+/* Vivid brand solid backgrounds */
 const BG: Record<string, string> = {
-  playstation: "#003087",    // PS deep blue
-  xbox:        "#107c10",    // Xbox green
-  nintendo:    "#e4000f",    // Nintendo red
-  vr:          "#1a0533",    // Deep purple VR
-  "consoles-retro": "#1a1a2e", // Dark retro
-  manettes:    "#0d0d1a",    // Dark manettes
-  jeux:        "#6b0f1a",    // Dark red jeux
-  volants:     "#1a0a00",    // Dark amber volants
-  casques:     "#001a2e",    // Dark teal casques
-  accessoires: "#0a1628",    // Dark blue acc
-};
-
-/*
- * Light accent color used for the label chip at the bottom.
- */
-const ACCENT: Record<string, string> = {
-  playstation: "#0070cc",
-  xbox:        "#19c319",
-  nintendo:    "#ff2a38",
-  vr:          "#7c3aed",
-  "consoles-retro": "#6b7280",
-  manettes:    "#a855f7",
-  jeux:        "#e11d48",
-  volants:     "#d97706",
-  casques:     "#0891b2",
-  accessoires: "#2563eb",
+  playstation: "#d4a017",
+  xbox:        "#107c10",
+  nintendo:    "#e4000f",
+  vr:          "#4c1d95",
+  "consoles-retro": "#374151",
+  manettes:    "#1e3a5f",
+  jeux:        "#7f1d1d",
+  volants:     "#78350f",
+  casques:     "#134e4a",
+  accessoires: "#1e3a8a",
 };
 
 export function CategoryTile({ category }: { category: Category }) {
   const { locale } = useI18n();
   const name = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
   const img = category.image_url ?? IMAGES[category.slug] ?? undefined;
-  const bg = BG[category.slug] ?? "#0d0d1a";
-  const accent = ACCENT[category.slug] ?? "#7c3aed";
+  const bg = BG[category.slug] ?? "#1e3a8a";
 
   return (
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl aspect-[3/4] transition-all duration-300 ease-out will-change-transform hover:-translate-y-1.5 hover:scale-[1.02]"
-      style={{
-        backgroundColor: bg,
-        boxShadow: `0 8px 32px -10px ${accent}55`,
-      }}
+      className="group relative flex flex-col overflow-hidden rounded-2xl"
+      style={{ backgroundColor: bg, aspectRatio: "3/4" }}
     >
-      {/* Subtle top vignette for depth */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at 50% 0%, ${accent}22 0%, transparent 70%)`,
-        }}
-      />
+      {/* Brand label — top left, subtle */}
+      <div className="absolute top-4 left-4 z-20 pointer-events-none">
+        <span className="text-white font-black text-xs sm:text-sm uppercase tracking-widest opacity-90 drop-shadow-md">
+          {name}
+        </span>
+      </div>
 
-      {/* Glow ring on hover */}
-      <div
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{ boxShadow: `inset 0 0 0 2px ${accent}88` }}
-      />
-
-      {/* Product image — object-contain so it floats on the brand colour */}
-      <div className="relative flex-1 flex items-center justify-center p-4 pb-2">
-        {img ? (
+      {/* Floating wrapper — handles the up/down bob animation */}
+      {img && (
+        <div className="absolute inset-0 flex items-center justify-center animate-float-slow will-change-transform">
           <img
             src={img}
             alt={name}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.07] group-hover:-translate-y-1 will-change-transform drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)]"
+            className="w-[90%] h-[90%] object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+            style={{ mixBlendMode: "multiply" }}
           />
-        ) : (
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white/60 text-2xl font-black uppercase"
-            style={{ background: `${accent}33` }}
-          >
-            {name[0]}
-          </div>
-        )}
-      </div>
-
-      {/* Category name chip at bottom */}
-      <div className="relative z-10 px-3 pb-3">
-        <div
-          className="rounded-xl px-3 py-2.5 flex items-center justify-between"
-          style={{ backgroundColor: `${accent}22`, border: `1px solid ${accent}44` }}
-        >
-          <span className="font-display font-black text-white text-sm leading-none tracking-tight uppercase">
-            {name}
-          </span>
-          <span
-            className="text-[10px] font-black uppercase tracking-widest"
-            style={{ color: accent }}
-          >
-            →
-          </span>
         </div>
-      </div>
+      )}
+
+      {/* Bottom gradient for text contrast if needed */}
+      <div
+        className="absolute bottom-0 inset-x-0 h-20 pointer-events-none z-10"
+        style={{ background: `linear-gradient(to top, ${bg}bb, transparent)` }}
+      />
     </Link>
   );
 }

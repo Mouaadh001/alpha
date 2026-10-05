@@ -60,20 +60,19 @@ export function Home() {
           )}
         </div>
 
-        {/* Mobile: horizontal scroll row */}
-        <div className="md:hidden relative">
-          <div className="overflow-x-auto no-scrollbar">
-            <div className="flex gap-3 px-4 pb-3" style={{ width: "max-content" }}>
-              {categories.map((c, i) => (
-                <div key={c.id} className="w-[42vw] max-w-[200px] shrink-0">
-                  <Reveal delay={Math.min(i, 8) * 30}>
-                    <CategoryTile category={c} />
-                  </Reveal>
-                </div>
-              ))}
-            </div>
+        {/* Mobile: large cards, horizontal scroll-snap, one card mostly visible */}
+        <div className="md:hidden overflow-x-auto no-scrollbar snap-x snap-mandatory">
+          <div className="flex gap-3 px-4 pb-3" style={{ width: "max-content" }}>
+            {categories.map((c, i) => (
+              <div key={c.id} className="w-[75vw] shrink-0 snap-start">
+                <Reveal delay={Math.min(i, 8) * 30}>
+                  <CategoryTile category={c} />
+                </Reveal>
+              </div>
+            ))}
+            {/* trailing spacer so last card can snap to start */}
+            <div className="w-[20vw] shrink-0" />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background to-transparent" />
         </div>
 
         {/* Desktop: responsive grid */}
