@@ -6,9 +6,20 @@ import { getErrorMessage } from "@/lib/errors";
 
 type Bucket = "product-images" | "category-images";
 
+/** Removes the background in the browser and returns a transparent PNG file. */
+async function cutOutBackground(file: File): Promise<File> {
+  // loaded only when needed, so the admin bundle stays small
+  const { removeBackground } = await import("@imgly/background-removal");
+  const blob = await removeBackground(file);
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
+  return new File([blob], `${baseName}.png`, { type: "image/png" });
+}
+
 /**
  * Single-image uploader with preview → replace → delete flow.
  * Uploads immediately to the given bucket and returns a signed URL via onChange.
+ * For the "category-images" bucket the background is removed automatically
+ * (override with the removeBg prop).
  */
 export function SingleImageUploader({
   bucket,
@@ -16,24 +27,40 @@ export function SingleImageUploader({
   onChange,
   label = "Image",
   aspect = "square",
+  removeBg,
 }: {
   bucket: Bucket;
   value: string | null | undefined;
   onChange: (url: string | null) => void;
   label?: string;
   aspect?: "square" | "wide" | "banner";
+  removeBg?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [drag, setDrag] = useState(false);
 
+  const shouldRemoveBg = removeBg ?? bucket === "category-images";
   const aspectCls = aspect === "wide" ? "aspect-video" : aspect === "banner" ? "aspect-[3/1]" : "aspect-square";
 
   const handleFiles = useCallback(async (files: FileList | File[] | null) => {
     if (!files) return;
-    const file = Array.from(files).find((f) => f.type.startsWith("image/"));
+    let file = Array.from(files).find((f) => f.type.startsWith("image/"));
     if (!file) return;
     setUploading(true);
     try {
+      if (shouldRemoveBg) {
+        setProcessing(true);
+        try {
+          file = await cutOutBackground(file);
+        } catch (e) {
+          // if the cutout fails, upload the original instead of blocking the client
+          toast.warning("Suppression du fond impossible, image originale utilisée");
+          console.error(e);
+        } finally {
+          setProcessing(false);
+        }
+      }
       // Delete previous file if it's ours
       if (value) await deleteImage(bucket, value).catch(() => {});
       const url = await uploadImage(bucket, file);
@@ -44,7 +71,7 @@ export function SingleImageUploader({
     } finally {
       setUploading(false);
     }
-  }, [bucket, value, onChange]);
+  }, [bucket, value, onChange, shouldRemoveBg]);
 
   const remove = async () => {
     if (!value) return;
@@ -53,12 +80,27 @@ export function SingleImageUploader({
     toast.success("Image supprimée");
   };
 
+  const busyOverlay = (
+    <div className="absolute inset-0 bg-background/70 grid place-items-center">
+      <div className="flex flex-col items-center gap-2 text-center px-2">
+        <Loader2 className="size-5 animate-spin text-accent" />
+        {processing && (
+          <span className="text-[10px] text-muted-foreground">Suppression du fond…</span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <div className="text-[11px] uppercase tracking-widest text-muted-foreground mb-2 font-mono">{label}</div>
       {value ? (
         <div className={`relative ${aspectCls} rounded-xl overflow-hidden border border-hairline bg-muted group`}>
-          <img src={value} alt="" className="w-full h-full object-cover" />
+          <img
+            src={value}
+            alt=""
+            className={`w-full h-full ${shouldRemoveBg ? "object-contain" : "object-cover"}`}
+          />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity grid place-items-center gap-2">
             <label className="cursor-pointer text-xs px-4 py-2 rounded-full bg-white text-black font-semibold flex items-center gap-2">
               <Upload className="size-3.5" /> Remplacer
@@ -68,11 +110,7 @@ export function SingleImageUploader({
               <X className="size-3.5" /> Supprimer
             </button>
           </div>
-          {uploading && (
-            <div className="absolute inset-0 bg-background/70 grid place-items-center">
-              <Loader2 className="size-5  text-accent" />
-            </div>
-          )}
+          {uploading && busyOverlay}
         </div>
       ) : (
         <label
@@ -82,12 +120,19 @@ export function SingleImageUploader({
           className={`block cursor-pointer ${aspectCls} rounded-xl border-2 border-dashed transition-colors grid place-items-center text-center px-4 ${drag ? "border-accent bg-accent/5" : "border-border bg-muted/40 hover:border-accent/60"}`}
         >
           {uploading ? (
-            <Loader2 className="size-6  text-accent" />
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="size-6 animate-spin text-accent" />
+              {processing && (
+                <span className="text-[10px] text-muted-foreground">Suppression du fond…</span>
+              )}
+            </div>
           ) : (
             <div>
               <ImageIcon className="size-6 mx-auto mb-2 text-muted-foreground" />
               <div className="text-xs font-semibold">Glissez une image ici</div>
-              <div className="text-[10px] text-muted-foreground mt-1">ou cliquez pour choisir</div>
+              <div className="text-[10px] text-muted-foreground mt-1">
+                {shouldRemoveBg ? "Le fond sera supprimé automatiquement" : "ou cliquez pour choisir"}
+              </div>
             </div>
           )}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFiles(e.target.files)} disabled={uploading} />
@@ -172,7 +217,7 @@ export function MultiImageUploader({
         <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
       </label>
       {uploading > 0 && (
-        <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="size-3 " /> Envoi de {uploading} image(s)…</div>
+        <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="size-3 animate-spin" /> Envoi de {uploading} image(s)…</div>
       )}
       {value.length > 0 && (
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">

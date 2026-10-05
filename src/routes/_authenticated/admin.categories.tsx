@@ -1,14 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { categoriesQO, allProductsAdminQO, type Category } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/lib/format";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Eye, EyeOff, X, Save, Layers } from "lucide-react";
+import { Plus, Trash2, Pencil, Eye, EyeOff, X, Save } from "lucide-react";
 import {
   AdminPage, AdminCard, AdminEmpty, ConfirmDialog,
-  inputCls, labelCls, btnPrimary, btnSecondary, btnDanger,
+  inputCls, labelCls, btnPrimary, btnSecondary,
 } from "@/components/admin/shell";
 import { SingleImageUploader } from "@/components/admin/image-uploader";
 import { deleteImage } from "@/lib/admin-upload";
@@ -71,7 +71,7 @@ function CategoriesAdmin() {
               <AdminCard key={c.id} className="!p-0 overflow-hidden group">
                 <div className="relative aspect-video bg-muted">
                   {c.image_url ? (
-                    <img src={c.image_url} alt="" className="w-full h-full object-cover" />
+                    <img src={c.image_url} alt="" className="w-full h-full object-contain p-2" />
                   ) : (
                     <div className="w-full h-full grid place-items-center text-muted-foreground text-xs">Pas d'image</div>
                   )}
@@ -146,7 +146,8 @@ function CategoryEditor({ category, onClose, onSaved }: { category: Category | n
       const payload = {
         name_fr: form.name_fr.trim(),
         name_ar: form.name_ar.trim() || null,
-        slug: (form.slug.trim() || slugify(form.name_fr)) + (category ? "" : "-" + Math.random().toString(36).slice(2, 5)),
+        // clean slug, no random suffix (keeps URLs like /category/playstation)
+        slug: form.slug.trim() || slugify(form.name_fr),
         image_url: form.image_url,
         banner_url: form.banner_url,
         position: form.position,
@@ -164,7 +165,12 @@ function CategoryEditor({ category, onClose, onSaved }: { category: Category | n
       }
       onSaved();
     } catch (e) {
-      toast.error(getErrorMessage(e, "Impossible d'enregistrer la catégorie"));
+      // 23505 = unique violation (a category with this slug already exists)
+      if ((e as { code?: string })?.code === "23505") {
+        toast.error("Une catégorie avec ce nom existe déjà");
+      } else {
+        toast.error(getErrorMessage(e, "Impossible d'enregistrer la catégorie"));
+      }
     } finally {
       setSaving(false);
     }
@@ -189,14 +195,18 @@ function CategoryEditor({ category, onClose, onSaved }: { category: Category | n
             </div>
           </div>
 
-          <SingleImageUploader
-            bucket="category-images"
-            value={form.image_url}
-            onChange={(url) => setForm({ ...form, image_url: url })}
-            label="Image de couverture (carrée)"
-            aspect="square"
-          />
-
+          <div>
+            <SingleImageUploader
+              bucket="category-images"
+              value={form.image_url}
+              onChange={(url) => setForm({ ...form, image_url: url })}
+              label="Image de la catégorie"
+              aspect="square"
+            />
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Le fond est supprimé automatiquement. Utilisez une photo nette du produit, bien centrée.
+            </p>
+          </div>
         </div>
         <div className="sticky bottom-0 p-4 border-t border-hairline bg-card flex justify-end gap-2">
           <button onClick={onClose} className={btnSecondary}>Annuler</button>
