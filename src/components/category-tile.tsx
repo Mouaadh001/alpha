@@ -25,59 +25,52 @@ const IMAGES: Record<string, string> = {
   accessoires: accImg,
 };
 
-/* Vivid brand solid backgrounds */
-const BG: Record<string, string> = {
-  playstation: "#d4a017",
-  xbox:        "#107c10",
-  nintendo:    "#e4000f",
-  vr:          "#4c1d95",
-  "consoles-retro": "#374151",
-  manettes:    "#1e3a5f",
-  jeux:        "#7f1d1d",
-  volants:     "#78350f",
-  casques:     "#134e4a",
-  accessoires: "#1e3a8a",
-};
-
 export function CategoryTile({ category }: { category: Category }) {
   const { locale } = useI18n();
   const name = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
   const img = category.image_url ?? IMAGES[category.slug] ?? undefined;
-  const bg = BG[category.slug] ?? "#1e3a8a";
 
   return (
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl"
-      style={{ backgroundColor: bg, aspectRatio: "3/4" }}
+      className="group flex flex-col items-center gap-3"
     >
-      {/* Brand label — top left, subtle */}
-      <div className="absolute top-4 left-4 z-20 pointer-events-none">
-        <span className="text-white font-black text-xs sm:text-sm uppercase tracking-widest opacity-90 drop-shadow-md">
-          {name}
-        </span>
+      {/*
+        Card technique to remove white image background on a dark theme:
+        - Inner background is WHITE (so mix-blend-mode:multiply erases the white image bg)
+        - Outer overlay is black using mix-blend-mode:multiply (turns white inner → dark)
+        Net result: product appears to float with no white background on dark page.
+      */}
+      <div
+        className="relative w-full overflow-hidden rounded-2xl"
+        style={{ aspectRatio: "3/4", backgroundColor: "#ffffff" }}
+      >
+        {/* Black overlay that darkens the white bg via multiply */}
+        <div
+          className="absolute inset-0 z-10 pointer-events-none"
+          style={{ backgroundColor: "#1a1a2e", mixBlendMode: "multiply" }}
+        />
+
+        {/* Floating image — the animation makes it bob up/down */}
+        {img && (
+          <div className="absolute inset-0 z-0 flex items-center justify-center animate-float-slow will-change-transform">
+            <img
+              src={img}
+              alt={name}
+              loading="lazy"
+              decoding="async"
+              className="w-[88%] h-[88%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-700 ease-out group-hover:scale-[1.07]"
+              style={{ mixBlendMode: "multiply" }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Floating wrapper — handles the up/down bob animation */}
-      {img && (
-        <div className="absolute inset-0 flex items-center justify-center animate-float-slow will-change-transform">
-          <img
-            src={img}
-            alt={name}
-            loading="lazy"
-            decoding="async"
-            className="w-[90%] h-[90%] object-contain transition-transform duration-700 ease-out group-hover:scale-105"
-            style={{ mixBlendMode: "multiply" }}
-          />
-        </div>
-      )}
-
-      {/* Bottom gradient for text contrast if needed */}
-      <div
-        className="absolute bottom-0 inset-x-0 h-20 pointer-events-none z-10"
-        style={{ background: `linear-gradient(to top, ${bg}bb, transparent)` }}
-      />
+      {/* Category name below — white text, no box, no frame */}
+      <span className="text-white font-black text-xs sm:text-sm uppercase tracking-widest text-center leading-tight">
+        {name}
+      </span>
     </Link>
   );
 }
