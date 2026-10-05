@@ -1,17 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import type { Category } from "@/lib/queries";
 import { useI18n } from "@/lib/i18n";
-import psImg from "@/assets/cat-playstation.png";
-import xboxImg from "@/assets/cat-xbox.png";
-import ninImg from "@/assets/cat-nintendo.png";
-import vrImg from "@/assets/cat-vr.png";
-import retroImg from "@/assets/cat-retro.png";
-import manImg from "@/assets/cat-manettes.png";
-import jeuxImg from "@/assets/cat-jeux.png";
-import volImg from "@/assets/cat-volants.png";
-import casImg from "@/assets/cat-casques.png";
-import accImg from "@/assets/cat-accessoires.png";
+import psImg from "@/assets/cat-playstation.jpg";
+import xboxImg from "@/assets/cat-xbox.jpg";
+import ninImg from "@/assets/cat-nintendo.jpg";
+import vrImg from "@/assets/cat-vr.jpg";
+import retroImg from "@/assets/cat-retro.jpg";
+import manImg from "@/assets/cat-manettes.jpg";
+import jeuxImg from "@/assets/cat-jeux.jpg";
+import volImg from "@/assets/cat-volants.jpg";
+import casImg from "@/assets/cat-casques.jpg";
+import accImg from "@/assets/cat-accessoires.jpg";
 
+// Fallback images, used only when the category has no uploaded image
 const DEFAULT_IMAGES: Record<string, string> = {
   playstation: psImg,
   xbox: xboxImg,
@@ -28,6 +29,7 @@ const DEFAULT_IMAGES: Record<string, string> = {
 export function CategoryTile({ category, index = 0 }: { category: Category; index?: number }) {
   const { locale } = useI18n();
   const name = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
+  // client's uploaded image first, local default second
   const img = category.image_url || DEFAULT_IMAGES[category.slug] || undefined;
 
   return (
@@ -49,7 +51,7 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
         </span>
       </div>
 
-      {/* floating product (transparent PNG) */}
+      {/* floating product */}
       {img && (
         <div
           className="absolute inset-0 flex items-center justify-center px-4 pb-6 pt-16 animate-float-slow will-change-transform"
