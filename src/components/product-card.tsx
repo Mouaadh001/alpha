@@ -45,7 +45,7 @@ export function ProductCard({ product }: { product: Product }) {
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0f0f14] text-white shadow-[0_4px_24px_-8px_rgba(0,0,0,0.8)] transition-all duration-300 ease-out hover:-translate-y-1.5 hover:border-purple-500/30 hover:shadow-[0_20px_48px_-16px_rgba(168,85,247,0.45)] active:scale-[0.985]"
     >
       {/* ── IMAGE ── */}
-      <div className="relative aspect-square w-full overflow-hidden bg-gradient-to-br from-[#1a1a2e] to-[#16213e]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-b from-[#1c1c2e] to-[#0f0f18]">
         {product.image_url ? (
           <>
             {/* Soft radial glow behind product */}

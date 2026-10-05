@@ -1,4 +1,6 @@
 import { useI18n } from "@/lib/i18n";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import floatPs from "@/assets/float-ps.webp";
 import floatXbox from "@/assets/float-xbox.webp";
 import floatManette from "@/assets/float-manette.webp";
@@ -110,6 +112,13 @@ export function GamingHero() {
             <p className="mt-5 text-muted-foreground text-sm sm:text-base md:text-lg max-w-lg">
               {desc}
             </p>
+            <Link
+              to="/category/$slug"
+              params={{ slug: 'playstation' }}
+              className="mt-8 inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-wider text-sm px-7 py-3.5 rounded-full shadow-[0_8px_30px_-8px_rgba(168,85,247,0.8)] transition-all duration-200 hover:shadow-[0_12px_40px_-8px_rgba(168,85,247,0.9)] hover:-translate-y-0.5"
+            >
+              {locale === 'fr' ? 'Découvrir' : 'اكتشف'} <ArrowRight className="size-4" />
+            </Link>
           </div>
       </div>
     </section>

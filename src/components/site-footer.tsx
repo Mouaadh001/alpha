@@ -19,7 +19,7 @@ export function SiteFooter() {
   const t = useT();
   const { locale } = useI18n();
   return (
-    <footer className="border-t border-hairline mt-8 bg-[#2a0f4a] text-white">
+    <footer className="border-t border-hairline mt-8 bg-[#09090f] text-white">
       {/* Massive wordmark */}
       <div className="max-w-[1600px] mx-auto px-6 pt-24 pb-16 border-b border-white/10">
         <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr_1fr] gap-12">
@@ -37,7 +37,7 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={l}
-                  className="size-10 rounded-full border border-white/20 grid place-items-center text-white/80 hover:text-[#2a0f4a] hover:bg-white hover:border-white transition-all"
+                  className="size-10 rounded-full border border-white/20 grid place-items-center text-white/80 hover:text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10 transition-all"
                 >
                   <Icon className="size-4" />
                 </a>

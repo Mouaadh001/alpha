@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/product-card";
 import { categoriesQO, productsByCategoryQO } from "@/lib/queries";
 import { useI18n, useT } from "@/lib/i18n";
 import { BackButton } from "@/components/back-button";
+import { Reveal } from "@/components/reveal";
 
 export const Route = createFileRoute("/category/$slug/")({
   head: ({ params }) => ({
@@ -94,7 +95,11 @@ function CategoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {products.map((p) => <ProductCard key={p.id} product={p} />)}
+            {products.map((p, i) => (
+              <Reveal key={p.id} delay={(i % 5) * 40}>
+                <ProductCard product={p} />
+              </Reveal>
+            ))}
           </div>
         )}
       </section>
