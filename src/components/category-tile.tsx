@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight } from "lucide-react";
 import type { Category } from "@/lib/queries";
 import { useI18n } from "@/lib/i18n";
 import psImg from "@/assets/cat-playstation.jpg";
@@ -26,58 +25,107 @@ const IMAGES: Record<string, string> = {
   accessoires: accImg,
 };
 
-const TINTS: Record<string, string> = {
-  playstation: "from-[#003087] to-[#001a4d]",
-  xbox: "from-[#0e7a0d] to-[#052e05]",
-  nintendo: "from-[#e60012] to-[#7a0008]",
-  vr: "from-[#4c1d95] to-[#1e1b4b]",
-  "consoles-retro": "from-[#701a75] to-[#3b0764]",
-  manettes: "from-[#6b21a8] to-[#2e1065]",
-  jeux: "from-[#7c3aed] to-[#3b0764]",
-  volants: "from-[#9d174d] to-[#3b0764]",
-  casques: "from-[#0f766e] to-[#042f2e]",
-  accessoires: "from-[#1d4ed8] to-[#1e3a8a]",
+/*
+ * Brand bg colors — vivid, like the reference yellow site.
+ * The product images have white/light backgrounds so we use object-contain
+ * and let the brand color show around the product.
+ */
+const BG: Record<string, string> = {
+  playstation: "#003087",    // PS deep blue
+  xbox:        "#107c10",    // Xbox green
+  nintendo:    "#e4000f",    // Nintendo red
+  vr:          "#1a0533",    // Deep purple VR
+  "consoles-retro": "#1a1a2e", // Dark retro
+  manettes:    "#0d0d1a",    // Dark manettes
+  jeux:        "#6b0f1a",    // Dark red jeux
+  volants:     "#1a0a00",    // Dark amber volants
+  casques:     "#001a2e",    // Dark teal casques
+  accessoires: "#0a1628",    // Dark blue acc
+};
+
+/*
+ * Light accent color used for the label chip at the bottom.
+ */
+const ACCENT: Record<string, string> = {
+  playstation: "#0070cc",
+  xbox:        "#19c319",
+  nintendo:    "#ff2a38",
+  vr:          "#7c3aed",
+  "consoles-retro": "#6b7280",
+  manettes:    "#a855f7",
+  jeux:        "#e11d48",
+  volants:     "#d97706",
+  casques:     "#0891b2",
+  accessoires: "#2563eb",
 };
 
 export function CategoryTile({ category }: { category: Category }) {
   const { locale } = useI18n();
   const name = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
   const img = category.image_url ?? IMAGES[category.slug] ?? undefined;
-  const tint = TINTS[category.slug] ?? "from-[#6d28d9] to-[#1e1b4b]";
+  const bg = BG[category.slug] ?? "#0d0d1a";
+  const accent = ACCENT[category.slug] ?? "#7c3aed";
 
   return (
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group relative block overflow-hidden rounded-xl aspect-[3/4] transition-all duration-300 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.7)]"
+      className="group relative flex flex-col overflow-hidden rounded-2xl aspect-[3/4] transition-all duration-300 ease-out will-change-transform hover:-translate-y-1.5 hover:scale-[1.02]"
+      style={{
+        backgroundColor: bg,
+        boxShadow: `0 8px 32px -10px ${accent}55`,
+      }}
     >
-      {/* Fallback tint */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${tint}`} />
+      {/* Subtle top vignette for depth */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at 50% 0%, ${accent}22 0%, transparent 70%)`,
+        }}
+      />
 
-      {/* Full-cover image — NO padding, NO contain */}
-      {img && (
-        <img
-          src={img}
-          alt={name}
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 will-change-transform"
-        />
-      )}
+      {/* Glow ring on hover */}
+      <div
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{ boxShadow: `inset 0 0 0 2px ${accent}88` }}
+      />
 
-      {/* Dark overlay for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent pointer-events-none" />
-
-      {/* Arrow badge */}
-      <div className="absolute top-2.5 end-2.5 size-6 rounded-full bg-white/20 backdrop-blur-sm grid place-items-center text-white transition-transform duration-200 ease-out group-hover:rotate-45">
-        <ArrowUpRight className="size-3" />
+      {/* Product image — object-contain so it floats on the brand colour */}
+      <div className="relative flex-1 flex items-center justify-center p-4 pb-2">
+        {img ? (
+          <img
+            src={img}
+            alt={name}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.07] group-hover:-translate-y-1 will-change-transform drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)]"
+          />
+        ) : (
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-white/60 text-2xl font-black uppercase"
+            style={{ background: `${accent}33` }}
+          >
+            {name[0]}
+          </div>
+        )}
       </div>
 
-      {/* Name at bottom */}
-      <div className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-10">
-        <h3 className="font-display font-black text-white text-sm sm:text-base leading-tight tracking-tight uppercase drop-shadow-md">
-          {name}
-        </h3>
+      {/* Category name chip at bottom */}
+      <div className="relative z-10 px-3 pb-3">
+        <div
+          className="rounded-xl px-3 py-2.5 flex items-center justify-between"
+          style={{ backgroundColor: `${accent}22`, border: `1px solid ${accent}44` }}
+        >
+          <span className="font-display font-black text-white text-sm leading-none tracking-tight uppercase">
+            {name}
+          </span>
+          <span
+            className="text-[10px] font-black uppercase tracking-widest"
+            style={{ color: accent }}
+          >
+            →
+          </span>
+        </div>
       </div>
     </Link>
   );
