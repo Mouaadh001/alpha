@@ -7,12 +7,56 @@ import { getErrorMessage } from "@/lib/errors";
 type Bucket = "product-images" | "category-images";
 
 /** Removes the background in the browser and returns a transparent PNG file. */
+/** Crops fully transparent margins so the product fills the whole image. */
+async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
+  const bmp = await createImageBitmap(blob);
+  const w = bmp.width;
+  const h = bmp.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return blob;
+  ctx.drawImage(bmp, 0, 0);
+  const { data } = ctx.getImageData(0, 0, w, h);
+
+  let minX = w, minY = h, maxX = -1, maxY = -1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (data[(y * w + x) * 4 + 3] > 40) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return blob; // nothing visible, keep as is
+
+  const pad = Math.round(Math.max(maxX - minX, maxY - minY) * paddingRatio);
+  const sx = Math.max(0, minX - pad);
+  const sy = Math.max(0, minY - pad);
+  const sw = Math.min(w, maxX + pad + 1) - sx;
+  const sh = Math.min(h, maxY + pad + 1) - sy;
+
+  const out = document.createElement("canvas");
+  out.width = sw;
+  out.height = sh;
+  out.getContext("2d")?.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+  return new Promise((resolve) => out.toBlob((b) => resolve(b ?? blob), "image/png"));
+}
+
+/** Removes the background in the browser and returns a cropped transparent PNG file. */
 async function cutOutBackground(file: File): Promise<File> {
   // loaded only when needed, so the admin bundle stays small
   const { removeBackground } = await import("@imgly/background-removal");
-  const blob = await removeBackground(file);
+  const cut = await removeBackground(file, {
+    model: "isnet", // slower to download, but more accurate on white products
+    output: { format: "image/png" },
+  });
+  const trimmed = await trimTransparent(cut);
   const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
-  return new File([blob], `${baseName}.png`, { type: "image/png" });
+  return new File([trimmed], `${baseName}.png`, { type: "image/png" });
 }
 
 /**
