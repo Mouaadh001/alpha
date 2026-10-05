@@ -22,11 +22,19 @@ export const Route = createFileRoute("/category/$slug/")({
     return { category: cat };
   },
   component: CategoryPage,
-  errorComponent: ({ error }) => <SiteShell><div className="p-12">{(error as Error).message}</div></SiteShell>,
-  notFoundComponent: () => <SiteShell><div className="p-12">Catégorie introuvable.</div></SiteShell>,
+  errorComponent: ({ error }) => (
+    <SiteShell>
+      <div className="p-12">{(error as Error).message}</div>
+    </SiteShell>
+  ),
+  notFoundComponent: () => (
+    <SiteShell>
+      <div className="p-12">Catégorie introuvable.</div>
+    </SiteShell>
+  ),
 });
 
-/* Per-brand vivid bg colours — same as CategoryTile */
+/* Per-brand vivid bg colours */
 const BG_COLORS: Record<string, string> = {
   playstation: "#0070cc",
   xbox: "#107c10",
@@ -43,12 +51,21 @@ const BG_COLORS: Record<string, string> = {
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { data: cats = [] } = useQuery(categoriesQO);
-  const category = cats.find((c) => c.slug === slug)!;
+  const category = cats.find((c) => c.slug === slug);
   const { locale } = useI18n();
   const t = useT();
-  const { data: products = [] } = useQuery({ ...productsByCategoryQO(category?.id ?? ""), enabled: !!category });
-  const catName = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
+  const { data: products = [] } = useQuery({
+    ...productsByCategoryQO(category?.id ?? ""),
+    enabled: !!category,
+  });
+
+  const catName = category
+    ? locale === "ar" && category.name_ar
+      ? category.name_ar
+      : category.name_fr
+    : slug;
   const bg = BG_COLORS[slug] ?? "#6d28d9";
+  const heroImg = category?.image_url ?? undefined;
 
   return (
     <SiteShell>
@@ -68,20 +85,40 @@ function CategoryPage() {
             backgroundSize: "180px",
           }}
         />
+
+        {/* floating category image (only if the category has one) */}
+        {heroImg && (
+          <div
+            className="pointer-events-none absolute right-2 bottom-4 w-[34vw] max-w-[320px] animate-float-slow will-change-transform md:right-10 md:w-[26vw]"
+            style={{ mixBlendMode: "multiply" }}
+          >
+            <img
+              src={heroImg}
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="h-full w-full object-contain opacity-90"
+            />
+          </div>
+        )}
+
         <div className="relative z-10 max-w-[1600px] mx-auto px-4 md:px-6 pt-8 pb-12">
           <BackButton className="mb-5 opacity-80" />
           <nav className="text-[11px] font-mono tracking-wider uppercase text-white/50 mb-4 flex gap-2">
-            <Link to="/" className="hover:text-white transition-colors">{t.home}</Link>
+            <Link to="/" className="hover:text-white transition-colors">
+              {t.home}
+            </Link>
             <span>/</span>
             <span className="text-white/80">{catName}</span>
           </nav>
           <h1 className="font-display font-black text-4xl md:text-6xl lg:text-7xl tracking-tight text-white drop-shadow-lg uppercase">
             {catName}
           </h1>
-          <p className="text-white/60 mt-3 text-sm font-mono">
+          <span className="mt-4 inline-flex items-center rounded-full border border-white/20 bg-black/25 px-3 py-1 text-xs font-mono text-white/80 backdrop-blur">
             {products.length} {locale === "fr" ? "produit(s) disponible(s)" : "منتج متاح"}
-          </p>
+          </span>
         </div>
+
         {/* bottom fade */}
         <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[#070711] to-transparent pointer-events-none" />
       </div>
@@ -94,7 +131,7 @@ function CategoryPage() {
             <h3 className="font-display text-2xl font-bold">{t.noProducts}</h3>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {products.map((p, i) => (
               <Reveal key={p.id} delay={(i % 5) * 40}>
                 <ProductCard product={p} />

@@ -14,7 +14,7 @@ import {
 } from "@/lib/queries";
 import { useI18n, useT } from "@/lib/i18n";
 
-export const Route = createFileRoute("/")(  {
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Alpha Store — Premium Gaming en Algérie" },
@@ -60,26 +60,26 @@ export function Home() {
           )}
         </div>
 
-        {/* Mobile: large cards, horizontal scroll-snap, one card mostly visible */}
+        {/* Mobile: horizontal swipe row, ~2 framed cards visible */}
         <div className="md:hidden overflow-x-auto no-scrollbar snap-x snap-mandatory">
-          <div className="flex gap-3 px-4 pb-3" style={{ width: "max-content" }}>
+          <div className="flex gap-3 px-4 pb-4 w-max">
             {categories.map((c, i) => (
-              <div key={c.id} className="w-[75vw] shrink-0 snap-start">
+              <div key={c.id} className="w-[46vw] max-w-[220px] shrink-0 snap-start">
                 <Reveal delay={Math.min(i, 8) * 30}>
-                  <CategoryTile category={c} />
+                  <CategoryTile category={c} index={i} />
                 </Reveal>
               </div>
             ))}
-            {/* trailing spacer so last card can snap to start */}
-            <div className="w-[20vw] shrink-0" />
+            {/* trailing spacer so the last card can snap to start */}
+            <div className="w-[8vw] shrink-0" />
           </div>
         </div>
 
-        {/* Desktop: responsive grid */}
-        <div className="hidden md:grid max-w-[1600px] mx-auto px-6 grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {/* Tablet / Desktop: responsive grid */}
+        <div className="hidden md:grid max-w-[1600px] mx-auto px-6 grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
           {categories.map((c, i) => (
             <Reveal key={c.id} delay={Math.min(i, 8) * 35}>
-              <CategoryTile category={c} />
+              <CategoryTile category={c} index={i} />
             </Reveal>
           ))}
         </div>

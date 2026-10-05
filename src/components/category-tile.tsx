@@ -25,7 +25,7 @@ const IMAGES: Record<string, string> = {
   accessoires: accImg,
 };
 
-export function CategoryTile({ category }: { category: Category }) {
+export function CategoryTile({ category, index = 0 }: { category: Category; index?: number }) {
   const { locale } = useI18n();
   const name = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
   const img = category.image_url ?? IMAGES[category.slug] ?? undefined;
@@ -34,43 +34,44 @@ export function CategoryTile({ category }: { category: Category }) {
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group flex flex-col items-center gap-3"
+      className="group block w-full rounded-3xl p-[1.5px] transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]
+                 bg-gradient-to-b from-purple-400/70 via-white/10 to-lime/40
+                 shadow-[0_12px_40px_-18px_rgba(168,85,247,0.55)] hover:shadow-[0_18px_50px_-15px_rgba(168,85,247,0.8)]"
     >
-      {/*
-        Card technique to remove white image background on a dark theme:
-        - Inner background is WHITE (so mix-blend-mode:multiply erases the white image bg)
-        - Outer overlay is black using mix-blend-mode:multiply (turns white inner → dark)
-        Net result: product appears to float with no white background on dark page.
-      */}
       <div
-        className="relative w-full overflow-hidden rounded-2xl"
-        style={{ aspectRatio: "3/4", backgroundColor: "#ffffff" }}
+        className="relative overflow-hidden rounded-[calc(1.5rem-1.5px)]"
+        style={{
+          aspectRatio: "4 / 5",
+          background:
+            "radial-gradient(circle at 50% 35%, #ffffff 0%, #ece7ff 55%, #d8cdff 100%)",
+        }}
       >
-        {/* Black overlay that darkens the white bg via multiply */}
-        <div
-          className="absolute inset-0 z-10 pointer-events-none"
-          style={{ backgroundColor: "#1a1a2e", mixBlendMode: "multiply" }}
-        />
+        {/* ground shadow (does not float) */}
+        <div className="absolute left-1/2 bottom-[22%] h-3 w-[55%] -translate-x-1/2 rounded-[50%] bg-[#2a1a5e]/25 blur-md" />
 
-        {/* Floating image — the animation makes it bob up/down */}
+        {/* floating product: blend on this wrapper so the white image bg vanishes into the card */}
         {img && (
-          <div className="absolute inset-0 z-0 flex items-center justify-center animate-float-slow will-change-transform">
+          <div
+            className="absolute inset-0 flex items-center justify-center px-5 pt-5 pb-16 animate-float-slow will-change-transform"
+            style={{ mixBlendMode: "multiply", animationDelay: `${(index % 5) * 0.35}s` }}
+          >
             <img
               src={img}
               alt={name}
               loading="lazy"
               decoding="async"
-              className="w-[88%] h-[88%] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-700 ease-out group-hover:scale-[1.07]"
-              style={{ mixBlendMode: "multiply" }}
+              className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
             />
           </div>
         )}
-      </div>
 
-      {/* Category name below — white text, no box, no frame */}
-      <span className="text-white font-black text-xs sm:text-sm uppercase tracking-widest text-center leading-tight">
-        {name}
-      </span>
+        {/* name bar */}
+        <div className="absolute inset-x-0 bottom-0 bg-[#140a2e]/90 backdrop-blur-sm px-3 py-3 text-center">
+          <span className="block text-white font-black text-[11px] sm:text-sm uppercase tracking-widest leading-tight">
+            {name}
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }
