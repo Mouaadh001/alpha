@@ -38,24 +38,27 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
       params={{ slug: category.slug }}
       className="group flex w-full flex-col items-center active:scale-[0.98] transition-transform"
     >
-      {/* floating product: no frame, no background, fills the full width */}
-      <div
-        className="aspect-square w-full animate-float-slow will-change-transform"
-        style={{ animationDelay: `${(index % 5) * 0.35}s` }}
-      >
-        {img && (
-          <img
-            src={img}
-            alt={name}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-contain drop-shadow-[0_25px_30px_rgba(0,0,0,0.55)] transition-transform duration-700 ease-out group-hover:scale-105"
-          />
-        )}
+      {/* wider than its box on phone so the product fills the whole screen width */}
+      <div className="relative left-1/2 w-[120%] -translate-x-1/2 md:left-0 md:w-full md:translate-x-0">
+        {/* floating product: no frame, no background */}
+        <div
+          className="aspect-square w-full animate-float-slow will-change-transform"
+          style={{ animationDelay: `${(index % 5) * 0.35}s` }}
+        >
+          {img && (
+            <img
+              src={img}
+              alt={name}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-contain drop-shadow-[0_25px_30px_rgba(0,0,0,0.55)] transition-transform duration-700 ease-out group-hover:scale-105"
+            />
+          )}
+        </div>
       </div>
 
       {/* category name */}
-      <span className="mt-1 text-center font-display text-base font-black uppercase tracking-[0.25em] text-white sm:text-lg">
+      <span className="-mt-3 text-center font-display text-base font-black uppercase tracking-[0.25em] text-white sm:text-lg">
         {name}
       </span>
     </Link>

@@ -34,8 +34,11 @@ async function hasTransparentBackground(file: File): Promise<boolean> {
   return total > 0 && transparent / total > 0.6;
 }
 
-/** Makes the cutout solid, then crops transparent margins so the product fills the image. */
-async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
+/**
+ * Cleans the cutout (removes faint haze, makes the product solid),
+ * then crops tightly around the product so it fills the whole image.
+ */
+async function trimTransparent(blob: Blob, paddingRatio = 0.02): Promise<Blob> {
   const bmp = await createImageBitmap(blob);
   const w = bmp.width;
   const h = bmp.height;
@@ -48,18 +51,18 @@ async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
   const img = ctx.getImageData(0, 0, w, h);
   const data = img.data;
 
-  // push semi-transparent pixels toward opaque so white products don't look gray/ghostly
   for (let i = 3; i < data.length; i += 4) {
     const a = data[i];
-    if (a >= 110) data[i] = 255;
-    else if (a > 30) data[i] = Math.min(255, a * 2);
+    if (a <= 60) data[i] = 0; // faint shadow/haze: remove, so it can't widen the crop
+    else if (a >= 140) data[i] = 255; // solid product
+    else data[i] = Math.min(255, Math.round((a - 60) * (255 / 80))); // soft edge
   }
   ctx.putImageData(img, 0, 0);
 
   let minX = w, minY = h, maxX = -1, maxY = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      if (data[(y * w + x) * 4 + 3] > 40) {
+      if (data[(y * w + x) * 4 + 3] > 100) {
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -217,7 +220,9 @@ export function SingleImageUploader({
               <ImageIcon className="size-6 mx-auto mb-2 text-muted-foreground" />
               <div className="text-xs font-semibold">Glissez une image ici</div>
               <div className="text-[10px] text-muted-foreground mt-1">
-                {shouldRemoveBg ? "Le fond sera supprimé automatiquement" : "ou cliquez pour choisir"}
+                {shouldRemoveBg
+                  ? "Idéal : PNG / WebP / AVIF sans fond. Sinon le fond est supprimé automatiquement"
+                  : "ou cliquez pour choisir"}
               </div>
             </div>
           )}
