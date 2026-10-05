@@ -6,8 +6,7 @@ import { getErrorMessage } from "@/lib/errors";
 
 type Bucket = "product-images" | "category-images";
 
-/** Removes the background in the browser and returns a transparent PNG file. */
-/** Crops fully transparent margins so the product fills the whole image. */
+/** Makes the cutout solid, then crops transparent margins so the product fills the image. */
 async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
   const bmp = await createImageBitmap(blob);
   const w = bmp.width;
@@ -18,7 +17,16 @@ async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return blob;
   ctx.drawImage(bmp, 0, 0);
-  const { data } = ctx.getImageData(0, 0, w, h);
+  const img = ctx.getImageData(0, 0, w, h);
+  const data = img.data;
+
+  // push semi-transparent pixels toward opaque so white products don't look gray/ghostly
+  for (let i = 3; i < data.length; i += 4) {
+    const a = data[i];
+    if (a >= 110) data[i] = 255;
+    else if (a > 30) data[i] = Math.min(255, a * 2);
+  }
+  ctx.putImageData(img, 0, 0);
 
   let minX = w, minY = h, maxX = -1, maxY = -1;
   for (let y = 0; y < h; y++) {
