@@ -60,18 +60,16 @@ export function Home() {
           )}
         </div>
 
-        {/* Mobile: horizontal swipe row, ~2 framed cards visible */}
-        {/* Mobile: big horizontal swipe cards */}
+        {/* Mobile: one big centered category per screen, swipe left/right */}
         <div className="md:hidden overflow-x-auto no-scrollbar snap-x snap-mandatory">
-          <div className="flex gap-4 px-4 pb-4 w-max">
+          <div className="flex gap-2 px-[7vw] pb-4 w-max">
             {categories.map((c, i) => (
-              <div key={c.id} className="w-[72vw] max-w-[320px] shrink-0 snap-center">
+              <div key={c.id} className="w-[86vw] max-w-[380px] shrink-0 snap-center">
                 <Reveal delay={Math.min(i, 8) * 30}>
                   <CategoryTile category={c} index={i} />
                 </Reveal>
               </div>
             ))}
-            <div className="w-[4vw] shrink-0" />
           </div>
         </div>
 
@@ -128,7 +126,7 @@ export function Home() {
             </div>
             <div className="min-w-0">
               <div className="text-[15px] md:text-base font-bold">
-                {locale === "fr" ? "Livraison disponible dans les 69 wilayas" : "التوصيل متوفر لـ 69 ولاية"}
+                {locale === "fr" ? "Livraison disponible dans les 58 wilayas" : "التوصيل متوفر لـ 58 ولاية"}
               </div>
               <div className="text-[13px] text-muted-foreground">
                 {locale === "fr" ? "Partout en Algérie, rapide et fiable" : "في كامل الجزائر، سريع وموثوق"}
