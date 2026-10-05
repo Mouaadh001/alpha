@@ -6,6 +6,34 @@ import { getErrorMessage } from "@/lib/errors";
 
 type Bucket = "product-images" | "category-images";
 
+/** True if the image already has a real transparent background (e.g. a cutout PNG/WEBP/AVIF). */
+async function hasTransparentBackground(file: File): Promise<boolean> {
+  if (!file.type.startsWith("image/")) return false;
+  const bmp = await createImageBitmap(file);
+  // downscale so the check is fast on big images
+  const scale = Math.min(1, 200 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale));
+  const h = Math.max(1, Math.round(bmp.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return false;
+  ctx.drawImage(bmp, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+
+  // look at the border pixels: a cutout has transparent corners/edges
+  let transparent = 0;
+  let total = 0;
+  const check = (x: number, y: number) => {
+    total++;
+    if (data[(y * w + x) * 4 + 3] < 20) transparent++;
+  };
+  for (let x = 0; x < w; x++) { check(x, 0); check(x, h - 1); }
+  for (let y = 0; y < h; y++) { check(0, y); check(w - 1, y); }
+  return total > 0 && transparent / total > 0.6;
+}
+
 /** Makes the cutout solid, then crops transparent margins so the product fills the image. */
 async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
   const bmp = await createImageBitmap(blob);
@@ -54,14 +82,20 @@ async function trimTransparent(blob: Blob, paddingRatio = 0.04): Promise<Blob> {
   return new Promise((resolve) => out.toBlob((b) => resolve(b ?? blob), "image/png"));
 }
 
-/** Removes the background in the browser and returns a cropped transparent PNG file. */
+/**
+ * Returns a cropped transparent PNG file.
+ * If the image already has a transparent background, the AI cutout is skipped.
+ */
 async function cutOutBackground(file: File): Promise<File> {
-  // loaded only when needed, so the admin bundle stays small
-  const { removeBackground } = await import("@imgly/background-removal");
-  const cut = await removeBackground(file, {
-    model: "isnet", // slower to download, but more accurate on white products
-    output: { format: "image/png" },
-  });
+  let cut: Blob = file;
+  if (!(await hasTransparentBackground(file))) {
+    // loaded only when needed, so the admin bundle stays small
+    const { removeBackground } = await import("@imgly/background-removal");
+    cut = await removeBackground(file, {
+      model: "isnet", // slower to download, but more accurate on white products
+      output: { format: "image/png" },
+    });
+  }
   const trimmed = await trimTransparent(cut);
   const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
   return new File([trimmed], `${baseName}.png`, { type: "image/png" });
@@ -137,7 +171,7 @@ export function SingleImageUploader({
       <div className="flex flex-col items-center gap-2 text-center px-2">
         <Loader2 className="size-5 animate-spin text-accent" />
         {processing && (
-          <span className="text-[10px] text-muted-foreground">Suppression du fond…</span>
+          <span className="text-[10px] text-muted-foreground">Traitement de l'image…</span>
         )}
       </div>
     </div>
@@ -175,7 +209,7 @@ export function SingleImageUploader({
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="size-6 animate-spin text-accent" />
               {processing && (
-                <span className="text-[10px] text-muted-foreground">Suppression du fond…</span>
+                <span className="text-[10px] text-muted-foreground">Traitement de l'image…</span>
               )}
             </div>
           ) : (
