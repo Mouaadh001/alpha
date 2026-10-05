@@ -12,7 +12,8 @@ import volImg from "@/assets/cat-volants.jpg";
 import casImg from "@/assets/cat-casques.jpg";
 import accImg from "@/assets/cat-accessoires.jpg";
 
-const IMAGES: Record<string, string> = {
+// Fallback images, used only when the category has no uploaded image
+const DEFAULT_IMAGES: Record<string, string> = {
   playstation: psImg,
   xbox: xboxImg,
   nintendo: ninImg,
@@ -25,51 +26,88 @@ const IMAGES: Record<string, string> = {
   accessoires: accImg,
 };
 
+// Brand colors for known categories
+const BRAND_COLORS: Record<string, string> = {
+  playstation: "#0070cc",
+  xbox: "#107c10",
+  nintendo: "#e4000f",
+  vr: "#6d28d9",
+  "consoles-retro": "#a21caf",
+  manettes: "#7c3aed",
+  jeux: "#be185d",
+  volants: "#d97706",
+  casques: "#0f766e",
+  accessoires: "#2563eb",
+};
+
+// Palette for categories the client creates later
+const PALETTE = ["#0070cc", "#107c10", "#e4000f", "#6d28d9", "#be185d", "#d97706", "#0f766e", "#2563eb"];
+
+function colorFor(slug: string) {
+  if (BRAND_COLORS[slug]) return BRAND_COLORS[slug];
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
 export function CategoryTile({ category, index = 0 }: { category: Category; index?: number }) {
   const { locale } = useI18n();
   const name = locale === "ar" && category.name_ar ? category.name_ar : category.name_fr;
-  const img = category.image_url ?? IMAGES[category.slug] ?? undefined;
+  // client's uploaded image first, local default second
+  const img = category.image_url || DEFAULT_IMAGES[category.slug] || undefined;
+  const color = colorFor(category.slug);
 
   return (
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group block w-full rounded-3xl p-[1.5px] transition-all duration-300 hover:-translate-y-1 active:scale-[0.98]
-                 bg-gradient-to-b from-purple-400/70 via-white/10 to-lime/40
-                 shadow-[0_12px_40px_-18px_rgba(168,85,247,0.55)] hover:shadow-[0_18px_50px_-15px_rgba(168,85,247,0.8)]"
+      className="group block w-full"
     >
+      {/* whole card floats slowly, staggered per tile */}
       <div
-        className="relative overflow-hidden rounded-[calc(1.5rem-1.5px)]"
-        style={{
-          aspectRatio: "4 / 5",
-          background:
-            "radial-gradient(circle at 50% 35%, #ffffff 0%, #ece7ff 55%, #d8cdff 100%)",
-        }}
+        className="animate-float-slow will-change-transform"
+        style={{ animationDelay: `${(index % 5) * 0.35}s` }}
       >
-        {/* ground shadow (does not float) */}
-        <div className="absolute left-1/2 bottom-[22%] h-3 w-[55%] -translate-x-1/2 rounded-[50%] bg-[#2a1a5e]/25 blur-md" />
-
-        {/* floating product: blend on this wrapper so the white image bg vanishes into the card */}
-        {img && (
-          <div
-            className="absolute inset-0 flex items-center justify-center px-5 pt-5 pb-16 animate-float-slow will-change-transform"
-            style={{ mixBlendMode: "multiply", animationDelay: `${(index % 5) * 0.35}s` }}
-          >
+        <div
+          className="relative overflow-hidden rounded-3xl border-2 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-[0.98]"
+          style={{
+            aspectRatio: "3 / 4",
+            borderColor: `${color}aa`,
+            background: `linear-gradient(160deg, ${color} 0%, ${color}99 100%)`,
+            boxShadow: `0 18px 40px -18px ${color}`,
+          }}
+        >
+          {/* object-cover: any image size or format fills the card, no empty box */}
+          {img && (
             <img
               src={img}
               alt={name}
               loading="lazy"
               decoding="async"
-              className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
             />
-          </div>
-        )}
+          )}
 
-        {/* name bar */}
-        <div className="absolute inset-x-0 bottom-0 bg-[#140a2e]/90 backdrop-blur-sm px-3 py-3 text-center">
-          <span className="block text-white font-black text-[11px] sm:text-sm uppercase tracking-widest leading-tight">
-            {name}
-          </span>
+          {/* colored tint at the bottom so the name is always readable */}
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2"
+            style={{
+              background: `linear-gradient(to top, ${color} 0%, ${color}99 45%, transparent 100%)`,
+            }}
+          />
+
+          {/* name; if there is no image it sits centered on the colored card */}
+          <div
+            className={
+              img
+                ? "absolute inset-x-0 bottom-0 px-3 pb-4 text-center"
+                : "absolute inset-0 flex items-center justify-center px-3 text-center"
+            }
+          >
+            <span className="block font-display text-base font-black uppercase tracking-[0.2em] text-white drop-shadow sm:text-lg">
+              {name}
+            </span>
+          </div>
         </div>
       </div>
     </Link>

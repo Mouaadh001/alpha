@@ -61,17 +61,17 @@ export function Home() {
         </div>
 
         {/* Mobile: horizontal swipe row, ~2 framed cards visible */}
+        {/* Mobile: big horizontal swipe cards */}
         <div className="md:hidden overflow-x-auto no-scrollbar snap-x snap-mandatory">
-          <div className="flex gap-3 px-4 pb-4 w-max">
+          <div className="flex gap-4 px-4 pb-4 w-max">
             {categories.map((c, i) => (
-              <div key={c.id} className="w-[46vw] max-w-[220px] shrink-0 snap-start">
+              <div key={c.id} className="w-[72vw] max-w-[320px] shrink-0 snap-center">
                 <Reveal delay={Math.min(i, 8) * 30}>
                   <CategoryTile category={c} index={i} />
                 </Reveal>
               </div>
             ))}
-            {/* trailing spacer so the last card can snap to start */}
-            <div className="w-[8vw] shrink-0" />
+            <div className="w-[4vw] shrink-0" />
           </div>
         </div>
 
