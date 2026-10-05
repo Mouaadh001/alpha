@@ -47,18 +47,39 @@ export function Home() {
       <GamingHero />
 
       {/* Nos catégories */}
-      <section className="max-w-[1600px] mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-6">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-4 md:p-6">
-          <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight mb-5 md:mb-8">
+      <section className="pt-8 md:pt-12 pb-6">
+        {/* Section header */}
+        <div className="max-w-[1600px] mx-auto px-4 md:px-6 mb-5 md:mb-8 flex items-center gap-3">
+          <h2 className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl tracking-tight">
             {locale === "fr" ? "Nos catégories" : "فئاتنا"}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+          {categories.length > 0 && (
+            <span className="mt-1 hidden sm:inline-flex items-center rounded-full bg-white/8 border border-white/10 px-3 py-1 text-xs font-bold font-mono text-muted-foreground">
+              {categories.length}
+            </span>
+          )}
+        </div>
+
+        {/* Mobile: horizontal scroll row */}
+        <div className="md:hidden overflow-x-auto no-scrollbar">
+          <div className="flex gap-3 px-4 pb-3" style={{ width: "max-content" }}>
             {categories.map((c, i) => (
-              <Reveal key={c.id} delay={Math.min(i, 8) * 35}>
-                <CategoryTile category={c} />
-              </Reveal>
+              <div key={c.id} className="w-[44vw] max-w-[200px] shrink-0">
+                <Reveal delay={Math.min(i, 8) * 30}>
+                  <CategoryTile category={c} />
+                </Reveal>
+              </div>
             ))}
           </div>
+        </div>
+
+        {/* Desktop: responsive grid */}
+        <div className="hidden md:grid max-w-[1600px] mx-auto px-6 grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {categories.map((c, i) => (
+            <Reveal key={c.id} delay={Math.min(i, 8) * 35}>
+              <CategoryTile category={c} />
+            </Reveal>
+          ))}
         </div>
       </section>
 
