@@ -32,7 +32,7 @@ const trimCache = new Map<string, string>();
 
 /**
  * Crops the empty transparent margins around a product image, in the browser,
- * so the product always fills the whole tile. Images without transparency
+ * so the product always fills its tile. Images without transparency
  * (plain JPEGs) are returned unchanged. Returns undefined while processing.
  */
 function useTrimmedSrc(src?: string): string | undefined {
@@ -134,26 +134,23 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
       params={{ slug: category.slug }}
       className="group flex w-full flex-col items-center active:scale-[0.98] transition-transform"
     >
-      {/* wider than its box on phone so the product fills the whole screen width */}
-      <div className="relative left-1/2 w-[120%] -translate-x-1/2 md:left-0 md:w-full md:translate-x-0">
-        {/* floating product: no frame, no background */}
-        <div
-          className="aspect-square w-full animate-float-slow will-change-transform"
-          style={{ animationDelay: `${(index % 5) * 0.35}s` }}
-        >
-          {img && (
-            <img
-              src={img}
-              alt={name}
-              decoding="async"
-              className="h-full w-full object-contain drop-shadow-[0_25px_30px_rgba(0,0,0,0.55)] transition-transform duration-700 ease-out group-hover:scale-105"
-            />
-          )}
-        </div>
+      {/* floating product: no frame, no background, always fully inside the card */}
+      <div
+        className="aspect-[5/4] w-full px-1 pb-3 pt-4 animate-float-slow will-change-transform md:aspect-square md:px-3"
+        style={{ animationDelay: `${(index % 5) * 0.35}s` }}
+      >
+        {img && (
+          <img
+            src={img}
+            alt={name}
+            decoding="async"
+            className="h-full w-full object-contain drop-shadow-[0_20px_25px_rgba(0,0,0,0.55)] transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+        )}
       </div>
 
       {/* category name */}
-      <span className="-mt-3 text-center font-display text-base font-black uppercase tracking-[0.25em] text-white sm:text-lg">
+      <span className="mt-2 text-center font-display text-base font-black uppercase tracking-[0.25em] text-white sm:text-lg">
         {name}
       </span>
     </Link>
