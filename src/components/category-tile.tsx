@@ -162,7 +162,7 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
             src={img}
             alt={name}
             decoding="async"
-            className="h-full w-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+                        className="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(255,255,255,0.28)] transition-transform duration-700 ease-out group-hover:scale-105"
           />
         )}
       </div>
