@@ -35,10 +35,11 @@ async function hasTransparentBackground(file: File): Promise<boolean> {
 }
 
 /**
- * Cleans the cutout (removes faint haze, makes the product solid),
- * then crops tightly around the product so it fills the whole image.
+ * Crops tightly around the product so it fills the whole image.
+ * solidify = true only for results of the AI cutout (cleans faint haze, makes the product solid).
+ * Images that were already transparent are NOT touched, only cropped.
  */
-async function trimTransparent(blob: Blob, paddingRatio = 0.02): Promise<Blob> {
+async function trimTransparent(blob: Blob, solidify: boolean, paddingRatio = 0.02): Promise<Blob> {
   const bmp = await createImageBitmap(blob);
   const w = bmp.width;
   const h = bmp.height;
@@ -51,18 +52,20 @@ async function trimTransparent(blob: Blob, paddingRatio = 0.02): Promise<Blob> {
   const img = ctx.getImageData(0, 0, w, h);
   const data = img.data;
 
-  for (let i = 3; i < data.length; i += 4) {
-    const a = data[i];
-    if (a <= 60) data[i] = 0; // faint shadow/haze: remove, so it can't widen the crop
-    else if (a >= 140) data[i] = 255; // solid product
-    else data[i] = Math.min(255, Math.round((a - 60) * (255 / 80))); // soft edge
+  if (solidify) {
+    for (let i = 3; i < data.length; i += 4) {
+      const a = data[i];
+      if (a <= 60) data[i] = 0; // faint haze: remove, so it can't widen the crop
+      else if (a >= 140) data[i] = 255; // solid product
+      else data[i] = Math.min(255, Math.round((a - 60) * (255 / 80))); // soft edge
+    }
+    ctx.putImageData(img, 0, 0);
   }
-  ctx.putImageData(img, 0, 0);
 
   let minX = w, minY = h, maxX = -1, maxY = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      if (data[(y * w + x) * 4 + 3] > 100) {
+      if (data[(y * w + x) * 4 + 3] > 128) {
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -87,11 +90,13 @@ async function trimTransparent(blob: Blob, paddingRatio = 0.02): Promise<Blob> {
 
 /**
  * Returns a cropped transparent PNG file.
- * If the image already has a transparent background, the AI cutout is skipped.
+ * If the image already has a transparent background, the AI cutout is skipped
+ * and its pixels are left untouched (only cropped).
  */
 async function cutOutBackground(file: File): Promise<File> {
   let cut: Blob = file;
-  if (!(await hasTransparentBackground(file))) {
+  const alreadyTransparent = await hasTransparentBackground(file);
+  if (!alreadyTransparent) {
     // loaded only when needed, so the admin bundle stays small
     const { removeBackground } = await import("@imgly/background-removal");
     cut = await removeBackground(file, {
@@ -99,7 +104,7 @@ async function cutOutBackground(file: File): Promise<File> {
       output: { format: "image/png" },
     });
   }
-  const trimmed = await trimTransparent(cut);
+  const trimmed = await trimTransparent(cut, !alreadyTransparent);
   const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
   return new File([trimmed], `${baseName}.png`, { type: "image/png" });
 }
