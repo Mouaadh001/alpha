@@ -31,10 +31,11 @@ const DEFAULT_IMAGES: Record<string, string> = {
  * Haze cleaning (0-255 alpha):
  * pixels at or below HAZE_LOW become fully transparent,
  * pixels at or above HAZE_HIGH become fully solid, in between = soft edge.
- * If dark haze is still visible on an image, raise both numbers a little (e.g. 120 / 220).
+ * Too much smoke left on an image: raise both (e.g. 170 / 245).
+ * Product edges look eaten or jagged: lower both (e.g. 100 / 210).
  */
-const HAZE_LOW = 90;
-const HAZE_HIGH = 200;
+const HAZE_LOW = 140;
+const HAZE_HIGH = 235;
 
 /** Results are cached so each image is processed only once. */
 const cleanCache = new Map<string, string>();
@@ -149,7 +150,7 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group flex w-full flex-col items-center active:scale-[0.98] transition-transform"
+      className="group flex w-full flex-col items-center pb-14 active:scale-[0.98] transition-transform md:pb-0"
     >
       {/* floating product: no frame, no background */}
       <div
