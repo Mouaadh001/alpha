@@ -136,7 +136,7 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
     >
       {/* floating product: no frame, no background, always fully inside the card */}
       <div
-        className="aspect-[5/4] w-full px-1 pb-3 pt-4 animate-float-slow will-change-transform md:aspect-square md:px-3"
+                className="aspect-[5/4] w-full px-8 pb-3 pt-4 animate-float-slow will-change-transform md:aspect-square md:px-3"
         style={{ animationDelay: `${(index % 5) * 0.35}s` }}
       >
         {img && (
