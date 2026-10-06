@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { SiteShell } from "@/components/site-shell";
@@ -6,11 +7,12 @@ import { CategoryTile } from "@/components/category-tile";
 import { GamingHero } from "@/components/gaming-hero";
 import { SpaceBackdrop } from "@/components/space-backdrop";
 import { Reveal } from "@/components/reveal";
-import { Truck, ShieldCheck, ArrowRight } from "lucide-react";
+import { Truck, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   featuredProductsQO,
   latestProductsQO,
   categoriesQO,
+  type Category,
 } from "@/lib/queries";
 import { useI18n, useT } from "@/lib/i18n";
 
@@ -29,6 +31,90 @@ export const Route = createFileRoute("/")({
   ),
   notFoundComponent: () => <SiteShell><div className="p-12">Introuvable</div></SiteShell>,
 });
+
+/** Phone only: one big category per screen, with arrows and dots so it is obvious there are more. */
+function CategoriesCarousel({ categories }: { categories: Category[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const count = categories.length;
+
+  const maxScroll = () => {
+    const el = ref.current;
+    return el ? el.scrollWidth - el.clientWidth : 0;
+  };
+
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el || count < 2) return;
+    const max = maxScroll();
+    if (max <= 0) return;
+    setActive(Math.round((el.scrollLeft / max) * (count - 1)));
+  };
+
+  const goTo = (i: number) => {
+    const el = ref.current;
+    if (!el || count < 2) return;
+    const clamped = Math.max(0, Math.min(count - 1, i));
+    el.scrollTo({ left: (maxScroll() * clamped) / (count - 1), behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative md:hidden">
+      <div
+        ref={ref}
+        onScroll={onScroll}
+        className="overflow-x-auto no-scrollbar snap-x snap-mandatory"
+      >
+        <div className="flex gap-3 px-[8vw] pb-2 w-max">
+          {categories.map((c, i) => (
+            <div key={c.id} className="w-[84vw] max-w-[380px] shrink-0 snap-center">
+              <Reveal delay={Math.min(i, 8) * 30}>
+                <CategoryTile category={c} index={i} />
+              </Reveal>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {count > 1 && (
+        <>
+          {/* side arrows */}
+          <button
+            type="button"
+            aria-label="Précédent"
+            onClick={() => goTo(active - 1)}
+            disabled={active === 0}
+            className="absolute left-2 top-[38%] grid size-9 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition disabled:opacity-0"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="Suivant"
+            onClick={() => goTo(active + 1)}
+            disabled={active === count - 1}
+            className="absolute right-2 top-[38%] grid size-9 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition disabled:opacity-0"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+
+          {/* dots */}
+          <div className="mt-2 flex items-center justify-center gap-2">
+            {categories.map((c, i) => (
+              <button
+                key={c.id}
+                type="button"
+                aria-label={`Catégorie ${i + 1}`}
+                onClick={() => goTo(i)}
+                className={`h-2 rounded-full transition-all ${i === active ? "w-6 bg-lime" : "w-2 bg-white/30"}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function Home() {
   const { data: featured = [] } = useQuery(featuredProductsQO);
@@ -54,24 +140,14 @@ export function Home() {
             {locale === "fr" ? "Nos catégories" : "فئاتنا"}
           </h2>
           {categories.length > 0 && (
-            <span className="mt-1 hidden sm:inline-flex items-center rounded-full bg-white/8 border border-white/10 px-3 py-1 text-xs font-bold font-mono text-muted-foreground">
+            <span className="mt-1 inline-flex items-center rounded-full bg-white/8 border border-white/10 px-3 py-1 text-xs font-bold font-mono text-muted-foreground">
               {categories.length}
             </span>
           )}
         </div>
 
-        {/* Mobile: one big centered category per screen, swipe left/right */}
-        <div className="md:hidden overflow-x-auto no-scrollbar snap-x snap-mandatory">
-          <div className="flex gap-2 px-[7vw] pb-4 w-max">
-            {categories.map((c, i) => (
-              <div key={c.id} className="w-[86vw] max-w-[380px] shrink-0 snap-center">
-                <Reveal delay={Math.min(i, 8) * 30}>
-                  <CategoryTile category={c} index={i} />
-                </Reveal>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Mobile: swipe carousel with arrows and dots */}
+        <CategoriesCarousel categories={categories} />
 
         {/* Tablet / Desktop: responsive grid */}
         <div className="hidden md:grid max-w-[1600px] mx-auto px-6 grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
