@@ -6,6 +6,49 @@ import { getErrorMessage } from "@/lib/errors";
 
 type Bucket = "product-images" | "category-images";
 
+const WEBP_QUALITY = 0.85;
+const MAX_DIMENSION = 2000; // px, longest side
+
+/** Encodes a canvas as WebP. Returns null if the browser can't produce WebP. */
+function canvasToWebp(canvas: HTMLCanvasElement, quality = WEBP_QUALITY): Promise<Blob | null> {
+  return new Promise((resolve) =>
+    canvas.toBlob((b) => resolve(b && b.type === "image/webp" ? b : null), "image/webp", quality),
+  );
+}
+
+/**
+ * Converts any image (JPG, PNG, AVIF, GIF, BMP...) to a .webp File.
+ * Keeps transparency. Downscales very large images.
+ * Already-WebP files are returned untouched. If conversion fails, the original is returned.
+ */
+async function toWebpFile(input: File | Blob, fallbackName = "image"): Promise<File> {
+  const rawName = input instanceof File ? input.name : fallbackName;
+  const baseName = rawName.replace(/\.[^.]+$/, "") || "image";
+
+  if (input.type === "image/webp") {
+    return input instanceof File ? input : new File([input], `${baseName}.webp`, { type: "image/webp" });
+  }
+
+  try {
+    const bmp = await createImageBitmap(input);
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width * scale));
+    const h = Math.max(1, Math.round(bmp.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("no 2d context");
+    ctx.drawImage(bmp, 0, 0, w, h);
+    const webp = await canvasToWebp(canvas);
+    if (!webp) throw new Error("webp encoding not supported");
+    return new File([webp], `${baseName}.webp`, { type: "image/webp" });
+  } catch (e) {
+    console.error("WebP conversion failed, using original file", e);
+    return input instanceof File ? input : new File([input], rawName, { type: input.type });
+  }
+}
+
 /** True if the image already has a real transparent background (e.g. a cutout PNG/WEBP/AVIF). */
 async function hasTransparentBackground(file: File): Promise<boolean> {
   if (!file.type.startsWith("image/")) return false;
@@ -38,6 +81,7 @@ async function hasTransparentBackground(file: File): Promise<boolean> {
  * Crops tightly around the product so it fills the whole image.
  * solidify = true only for results of the AI cutout (cleans faint haze, makes the product solid).
  * Images that were already transparent are NOT touched, only cropped.
+ * Output is a lossless PNG intermediate; it is converted to WebP afterwards.
  */
 async function trimTransparent(blob: Blob, solidify: boolean, paddingRatio = 0.02): Promise<Blob> {
   const bmp = await createImageBitmap(blob);
@@ -89,7 +133,7 @@ async function trimTransparent(blob: Blob, solidify: boolean, paddingRatio = 0.0
 }
 
 /**
- * Returns a cropped transparent PNG file.
+ * Returns a cropped transparent WebP file.
  * If the image already has a transparent background, the AI cutout is skipped
  * and its pixels are left untouched (only cropped).
  */
@@ -106,11 +150,12 @@ async function cutOutBackground(file: File): Promise<File> {
   }
   const trimmed = await trimTransparent(cut, !alreadyTransparent);
   const baseName = file.name.replace(/\.[^.]+$/, "") || "image";
-  return new File([trimmed], `${baseName}.png`, { type: "image/png" });
+  return toWebpFile(trimmed, `${baseName}.png`);
 }
 
 /**
  * Single-image uploader with preview → replace → delete flow.
+ * Every image is converted to .webp before upload.
  * Uploads immediately to the given bucket and returns a signed URL via onChange.
  * For the "category-images" bucket the background is removed automatically
  * (override with the removeBg prop).
@@ -143,17 +188,21 @@ export function SingleImageUploader({
     if (!file) return;
     setUploading(true);
     try {
-      if (shouldRemoveBg) {
-        setProcessing(true);
-        try {
-          file = await cutOutBackground(file);
-        } catch (e) {
-          // if the cutout fails, upload the original instead of blocking the client
-          toast.warning("Suppression du fond impossible, image originale utilisée");
-          console.error(e);
-        } finally {
-          setProcessing(false);
+      setProcessing(true);
+      try {
+        if (shouldRemoveBg) {
+          try {
+            file = await cutOutBackground(file);
+          } catch (e) {
+            // if the cutout fails, upload the original instead of blocking the client
+            toast.warning("Suppression du fond impossible, image originale utilisée");
+            console.error(e);
+          }
         }
+        // Always end up with .webp (no-op if the cutout already produced one)
+        file = await toWebpFile(file);
+      } finally {
+        setProcessing(false);
       }
       // Delete previous file if it's ours
       if (value) await deleteImage(bucket, value).catch(() => {});
@@ -227,7 +276,7 @@ export function SingleImageUploader({
               <div className="text-[10px] text-muted-foreground mt-1">
                 {shouldRemoveBg
                   ? "Idéal : PNG / WebP / AVIF sans fond. Sinon le fond est supprimé automatiquement"
-                  : "ou cliquez pour choisir"}
+                  : "ou cliquez pour choisir (converti en WebP)"}
               </div>
             </div>
           )}
@@ -240,6 +289,7 @@ export function SingleImageUploader({
 
 /**
  * Multi-image gallery uploader with drag-drop, preview, reorder, cover selection.
+ * Every image is converted to .webp before upload.
  * Manages an internal upload queue and exposes ordered URL array via onChange.
  */
 export function MultiImageUploader({
@@ -266,7 +316,8 @@ export function MultiImageUploader({
     const results: string[] = [];
     for (const f of arr) {
       try {
-        const url = await uploadImage(bucket, f);
+        const webp = await toWebpFile(f);
+        const url = await uploadImage(bucket, webp);
         results.push(url);
       } catch (e) {
         toast.error(getErrorMessage(e, "Échec de l'envoi"));
@@ -309,7 +360,7 @@ export function MultiImageUploader({
       >
         <Upload className="size-6 mx-auto mb-2 text-muted-foreground" />
         <div className="text-sm font-semibold">Glissez-déposez vos images</div>
-        <div className="text-xs text-muted-foreground mt-1">JPG, PNG, WEBP — plusieurs à la fois</div>
+        <div className="text-xs text-muted-foreground mt-1">JPG, PNG, AVIF… — plusieurs à la fois, convertis en WebP</div>
         <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
       </label>
       {uploading > 0 && (
