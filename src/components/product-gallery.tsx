@@ -61,7 +61,7 @@ export function ProductGallery({ images, alt }: Props) {
             src={src}
             alt={alt}
             draggable={false}
-            className={`absolute inset-0 w-full h-full object-contain p-2 md:p-12 transition-opacity duration-500 select-none ${i === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 select-none ${i === index ? "opacity-100" : "opacity-0 pointer-events-none"}`}
           />
         ))}
 
@@ -104,7 +104,7 @@ export function ProductGallery({ images, alt }: Props) {
               style={{ backgroundColor: "#ffffff" }}
               className={`aspect-square overflow-hidden border transition ${i === index ? "border-lime" : "border-hairline hover:border-muted-foreground"}`}
             >
-              <img src={src} alt="" className="w-full h-full object-contain p-2" />
+              <img src={src} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

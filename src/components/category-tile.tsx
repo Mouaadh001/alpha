@@ -150,26 +150,34 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      // pb-24 = space below each category on mobile (was pb-14). Try pb-28 / pb-32 for even more.
-      className="group flex w-full flex-col items-center pb-24 active:scale-[0.98] transition-transform md:pb-0"
+      className="group flex w-full flex-col active:scale-[0.98] transition-transform"
     >
-      {/* floating product: no frame, no background */}
+      {/* fixed-height image zone — all tiles same height, image fills the space */}
       <div
-        className="aspect-[5/4] w-full px-2 pb-3 pt-4 animate-float-slow will-change-transform md:aspect-square md:px-3"
-        style={{ animationDelay: `${(index % 5) * 0.35}s` }}
+        className="relative w-full overflow-hidden rounded-xl md:rounded-2xl"
+        style={{ paddingBottom: "100%" /* 1:1 square */ }}
       >
-        {img && (
-          <img
-            src={img}
-            alt={name}
-            decoding="async"
-            className="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(255,255,255,0.28)] transition-transform duration-700 ease-out group-hover:scale-105"
-          />
-        )}
+        <div
+          className="absolute inset-0 flex items-center justify-center animate-float-slow will-change-transform"
+          style={{ animationDelay: `${(index % 5) * 0.35}s` }}
+        >
+          {img ? (
+            <img
+              src={img}
+              alt={name}
+              decoding="async"
+              className="h-full w-full object-contain drop-shadow-[0_0_18px_rgba(255,255,255,0.25)] transition-transform duration-700 ease-out group-hover:scale-110"
+            />
+          ) : (
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/20">
+              {name}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* category name */}
-      <span className="mt-2 text-center font-display text-base font-black uppercase tracking-[0.25em] text-white sm:text-lg">
+      {/* category name — always at the same vertical position */}
+      <span className="mt-3 block text-center font-display text-sm font-black uppercase tracking-[0.22em] text-white sm:text-base md:mt-4">
         {name}
       </span>
     </Link>

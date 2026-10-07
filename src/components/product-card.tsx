@@ -57,7 +57,7 @@ export function ProductCard({ product }: { product: Product }) {
               alt={name}
               loading="lazy"
               decoding="async"
-              className="relative z-10 h-full w-full object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-[1.08] group-hover:-translate-y-1 will-change-transform drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]"
+              className="relative z-10 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.08] group-hover:-translate-y-1 will-change-transform"
             />
           </>
         ) : (
