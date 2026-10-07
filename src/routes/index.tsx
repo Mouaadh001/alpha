@@ -61,7 +61,7 @@ export function Home() {
         </div>
 
         {/* Phone: one category after the other (vertical). Tablet/desktop: grid. */}
-        <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 gap-24 md:grid-cols-3 md:gap-12 lg:grid-cols-4 lg:gap-16 xl:grid-cols-5">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-6 grid grid-cols-1 gap-[180px] md:grid-cols-3 md:gap-[100px] lg:grid-cols-4 lg:gap-[140px] xl:grid-cols-5">
           {categories.map((c, i) => (
             <Reveal key={c.id} delay={Math.min(i, 8) * 35}>
               <CategoryTile category={c} index={i} />
