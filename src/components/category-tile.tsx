@@ -152,10 +152,10 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
       params={{ slug: category.slug }}
       className="group flex w-full flex-col active:scale-[0.98] transition-transform"
     >
-      {/* fixed-height image zone — always dark bg so transparent PNGs look clean in any theme */}
+      {/* fixed-height image zone — all tiles same height, image fills the space */}
       <div
         className="relative w-full rounded-xl md:rounded-2xl"
-        style={{ paddingBottom: "100%", backgroundColor: "#0c0c14" }}
+        style={{ paddingBottom: "100%" /* 1:1 square */ }}
       >
         <div
           className="absolute inset-0 flex items-center justify-center animate-float-slow will-change-transform"
