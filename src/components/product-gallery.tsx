@@ -49,7 +49,7 @@ export function ProductGallery({ images, alt }: Props) {
   return (
     <div className="w-full">
       <div
-        className="relative aspect-square md:aspect-[4/5] w-full overflow-hidden bg-[color-mix(in_oklab,var(--color-surface)_92%,white_2%)] cursor-zoom-in group"
+        className="relative aspect-square md:aspect-[4/5] w-full overflow-hidden bg-white cursor-zoom-in group"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onClick={() => setZoomOpen(true)}
@@ -100,7 +100,7 @@ export function ProductGallery({ images, alt }: Props) {
               key={src + i}
               onClick={() => setIndex(i)}
               aria-label={`Image ${i + 1}`}
-              className={`aspect-square overflow-hidden bg-surface border transition ${i === index ? "border-lime" : "border-hairline hover:border-muted-foreground"}`}
+              className={`aspect-square overflow-hidden bg-white border transition ${i === index ? "border-lime" : "border-hairline hover:border-muted-foreground"}`}
             >
               <img src={src} alt="" className="w-full h-full object-contain p-2" />
             </button>
