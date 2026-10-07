@@ -15,11 +15,11 @@ export function AnnouncementBar() {
     (locale === "ar" ? data.text_ar || data.text_fr : data.text_fr || data.text_ar) || "";
   const items = raw.split(/·|\|/).map((s) => s.trim()).filter(Boolean);
   if (items.length === 0) return null;
-  const duration = Math.max(60, data.speed_seconds ?? 80);
+  const duration = Math.max(90, data.speed_seconds ?? 120);
   // Repeat items enough times inside each track so a short single sentence
   // still produces a track wider than the viewport — otherwise a centered item
   // scrolls once and the marquee visibly snaps back.
-  const REPEAT = 20;
+  const REPEAT = 6;
   const packed = Array.from({ length: REPEAT }).flatMap(() => items);
   const Track = () => (
     <div className="flex items-center h-full shrink-0">

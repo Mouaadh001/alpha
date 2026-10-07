@@ -49,7 +49,8 @@ export function ProductGallery({ images, alt }: Props) {
   return (
     <div className="w-full">
       <div
-        className="relative aspect-square md:aspect-[4/5] w-full overflow-hidden bg-white cursor-zoom-in group"
+        className="relative aspect-square md:aspect-[4/5] w-full overflow-hidden cursor-zoom-in group"
+        style={{ backgroundColor: "#ffffff" }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onClick={() => setZoomOpen(true)}
@@ -100,7 +101,8 @@ export function ProductGallery({ images, alt }: Props) {
               key={src + i}
               onClick={() => setIndex(i)}
               aria-label={`Image ${i + 1}`}
-              className={`aspect-square overflow-hidden bg-white border transition ${i === index ? "border-lime" : "border-hairline hover:border-muted-foreground"}`}
+              style={{ backgroundColor: "#ffffff" }}
+              className={`aspect-square overflow-hidden border transition ${i === index ? "border-lime" : "border-hairline hover:border-muted-foreground"}`}
             >
               <img src={src} alt="" className="w-full h-full object-contain p-2" />
             </button>
