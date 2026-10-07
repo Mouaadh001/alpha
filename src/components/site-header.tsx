@@ -1,10 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Search, ShoppingBag, Menu, X, ArrowRight, Sun, Moon, ChevronRight, ChevronDown } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, ArrowRight, ChevronRight, ChevronDown } from "lucide-react";
 import { Instagram, Facebook } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart";
 import { useI18n, useT } from "@/lib/i18n";
-import { useTheme } from "@/lib/theme";
 import { useQuery } from "@tanstack/react-query";
 import { categoriesQO } from "@/lib/queries";
 import alphaLogo from "@/assets/alpha-logo.webp";
@@ -24,7 +23,6 @@ function DrawerTikTokIcon({ className }: { className?: string }) {
 export function SiteHeader() {
   const { count } = useCart();
   const { locale, setLocale } = useI18n();
-  const { theme, toggle: toggleTheme } = useTheme();
   const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -53,7 +51,7 @@ export function SiteHeader() {
     <>
       <header className="sticky top-0 z-50 bg-background/85 backdrop-blur-xl border-b border-hairline">
         <div className="max-w-[1600px] mx-auto px-3 md:px-5 h-14 grid grid-cols-3 items-center gap-2">
-          {/* Left — theme toggle + mobile menu */}
+          {/* Left — mobile menu */}
           <div className="flex items-center gap-3 md:gap-4 justify-self-start">
             <button
               onClick={() => setMenuOpen(true)}
@@ -67,13 +65,6 @@ export function SiteHeader() {
               className="hidden md:flex items-center gap-2 text-sm font-semibold tracking-tight text-muted-foreground hover:text-lime transition-colors"
             >
               <Menu className="size-4" /> {t.categories}
-            </button>
-            <button
-              onClick={toggleTheme}
-              aria-label="Theme"
-              className="text-foreground/80 hover:text-lime transition-colors"
-            >
-              {theme === "dark" ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
             </button>
           </div>
 
