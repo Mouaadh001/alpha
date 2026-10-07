@@ -150,7 +150,8 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
     <Link
       to="/category/$slug"
       params={{ slug: category.slug }}
-      className="group flex w-full flex-col items-center pb-14 active:scale-[0.98] transition-transform md:pb-0"
+      // pb-24 = space below each category on mobile (was pb-14). Try pb-28 / pb-32 for even more.
+      className="group flex w-full flex-col items-center pb-24 active:scale-[0.98] transition-transform md:pb-0"
     >
       {/* floating product: no frame, no background */}
       <div
@@ -162,7 +163,7 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
             src={img}
             alt={name}
             decoding="async"
-                        className="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(255,255,255,0.28)] transition-transform duration-700 ease-out group-hover:scale-105"
+            className="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(255,255,255,0.28)] transition-transform duration-700 ease-out group-hover:scale-105"
           />
         )}
       </div>
