@@ -154,7 +154,7 @@ export function CategoryTile({ category, index = 0 }: { category: Category; inde
     >
       {/* fixed-height image zone — all tiles same height, image fills the space */}
       <div
-        className="relative w-full overflow-hidden rounded-xl md:rounded-2xl"
+        className="relative w-full rounded-xl md:rounded-2xl"
         style={{ paddingBottom: "100%" /* 1:1 square */ }}
       >
         <div
